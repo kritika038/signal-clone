@@ -201,12 +201,16 @@ class IdentityService:
         refresh_token = create_refresh_token(user_id, session_id)
         expires_at = datetime.now(timezone.utc) + timedelta(days=7) # 7 days refresh token validity
         
+        safe_device_name = device_name[:100] if device_name else None
+        safe_device_type = device_type[:50] if device_type else None
+        safe_ip = ip[:45] if ip else None
+
         session = await self.session_manager.create_session(
             user_id=user_id,
             refresh_token=refresh_token,
-            device_name=device_name,
-            device_type=device_type,
-            ip_address=ip,
+            device_name=safe_device_name,
+            device_type=safe_device_type,
+            ip_address=safe_ip,
             expires_at=expires_at,
             session_id=session_id
         )
