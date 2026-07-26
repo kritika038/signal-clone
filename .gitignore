@@ -1,0 +1,40 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Backend dependencies and virtual environments
+backend/.venv/
+backend/venv/
+backend/ENV/
+backend/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/**/*.pyd
+backend/.env
+
+# Local SQLite databases
+backend/*.db
+backend/*.db-journal
+backend/*.db-shm
+backend/*.db-wal
+*.db
+*.db-journal
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

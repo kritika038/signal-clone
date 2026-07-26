@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 30% 97%;
+    --foreground: 218 28% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 218 28% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 28% 12%;
+    --primary: 218 82% 57%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 30% 94%;
+    --secondary-foreground: 220 28% 16%;
+    --muted: 214 24% 92%;
+    --muted-foreground: 217 12% 43%;
+    --accent: 213 31% 91%;
+    --accent-foreground: 218 28% 12%;
+    --destructive: 0 72% 53%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 22% 84%;
+    --input: 214 22% 84%;
+    --ring: 218 82% 57%;
+    --radius: 1.1rem;
+  }
+
+  .dark {
+    --background: 211 36% 10%;
+    --foreground: 210 30% 97%;
+    --card: 214 34% 13%;
+    --card-foreground: 210 30% 97%;
+    --popover: 214 34% 13%;
+    --popover-foreground: 210 30% 97%;
+    --primary: 216 82% 62%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 214 28% 18%;
+    --secondary-foreground: 210 30% 97%;
+    --muted: 214 28% 18%;
+    --muted-foreground: 215 14% 66%;
+    --accent: 214 28% 18%;
+    --accent-foreground: 210 30% 97%;
+    --destructive: 0 63% 42%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 20% 21%;
+    --input: 214 20% 21%;
+    --ring: 216 82% 62%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "SF Pro Display", "Segoe UI Variable", "Segoe UI", sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    background: rgba(91, 150, 255, 0.32);
+  }
+}
+
+@layer utilities {
+  .signal-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .signal-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+  }
+}

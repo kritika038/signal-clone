@@ -1,0 +1,236 @@
+import uuid
+from typing import Optional
+from fastapi import APIRouter, Depends, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import (
+    get_async_db,
+    get_session_manager,
+    get_current_user,
+    get_current_user_and_session,
+    rate_limit_register,
+    rate_limit_login,
+    rate_limit_verify_otp,
+    rate_limit_refresh,
+    get_client_ip,
+    global_otp_store
+)
+from app.core.exceptions import APIException
+from app.implementations.db_session_manager import DBSessionManager
+from app.models.user import User
+from app.models.user_session import UserSession
+from app.schemas.auth import (
+    UserRegister,
+    OTPVerify,
+    UserLogin,
+    TokenRefreshRequest,
+    TokenResponse,
+    ProfileUpdate
+)
+from app.services.identity_service import IdentityService
+from app.services.user_service import UserService
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+def get_identity_service(
+    db: AsyncSession = Depends(get_async_db),
+    session_manager: DBSessionManager = Depends(get_session_manager)
+) -> IdentityService:
+    return IdentityService(db, global_otp_store, session_manager)
+
+# Helper to format User model representation safely
+def format_user_data(user: User) -> dict:
+    from sqlalchemy import inspect
+    state = inspect(user)
+    settings_data = None
+    if "settings" not in state.unloaded and user.settings is not None:
+        settings_data = {
+            "theme": user.settings.theme,
+            "language": user.settings.language,
+            "privacy_last_seen": user.settings.privacy_last_seen,
+            "privacy_profile_photo": user.settings.privacy_profile_photo,
+            "privacy_read_receipts": user.settings.privacy_read_receipts,
+            "privacy_typing_indicator": user.settings.privacy_typing_indicator,
+            "notifications_enabled": user.settings.notifications_enabled,
+            "auto_download_media": user.settings.auto_download_media,
+            "default_disappearing_timer": user.settings.default_disappearing_timer,
+            "font_size": user.settings.font_size,
+        }
+    
+    return {
+        "id": str(user.id),
+        "phone": user.phone,
+        "username": user.username,
+        "display_name": user.display_name,
+        "bio": user.bio,
+        "avatar_url": user.avatar_url,
+        "presence_status": user.presence_status.value if user.presence_status else None,
+        "last_seen": user.last_seen.isoformat() if user.last_seen else None,
+        "is_verified": user.is_verified,
+        "settings": settings_data
+    }
+
+@router.post("/register", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_register)])
+async def register(
+    register_in: UserRegister,
+    request: Request,
+    service: IdentityService = Depends(get_identity_service)
+):
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    try:
+        otp = await service.register(register_in, ip, user_agent)
+        return {
+            "success": True,
+            "data": {
+                "message": "OTP code sent successfully.",
+                "otp_mock": otp  # Exposed for testing/development lifecycle
+            }
+        }
+    except ValueError as e:
+        raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED", str(e))
+
+@router.post("/verify-otp", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_verify_otp)])
+async def verify_otp(
+    verify_in: OTPVerify,
+    request: Request,
+    service: IdentityService = Depends(get_identity_service)
+):
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    try:
+        user, session, access_token, refresh_token = await service.verify_otp(
+            verify_in.phone, verify_in.otp, ip, user_agent, "DESKTOP"
+        )
+        return {
+            "success": True,
+            "data": {
+                "user": format_user_data(user),
+                "session_id": str(session.id),
+                "tokens": {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "token_type": "bearer"
+                }
+            }
+        }
+    except ValueError as e:
+        raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_VERIFICATION_FAILED", str(e))
+
+@router.post("/login", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_login)])
+async def login(
+    login_in: UserLogin,
+    request: Request,
+    service: IdentityService = Depends(get_identity_service)
+):
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    try:
+        user, session, access_token, refresh_token = await service.login(
+            login_in, ip, user_agent, "DESKTOP"
+        )
+        return {
+            "success": True,
+            "data": {
+                "user": format_user_data(user),
+                "session_id": str(session.id),
+                "tokens": {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "token_type": "bearer"
+                }
+            }
+        }
+    except ValueError as e:
+        raise APIException(status.HTTP_401_UNAUTHORIZED, "INVALID_CREDENTIALS", str(e))
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(
+    request: Request,
+    user_and_session: tuple[User, UserSession] = Depends(get_current_user_and_session),
+    service: IdentityService = Depends(get_identity_service)
+):
+    _, session = user_and_session
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    await service.logout(session.id, ip, user_agent)
+    return {
+        "success": True,
+        "data": {
+            "message": "Successfully logged out from active session."
+        }
+    }
+
+@router.post("/refresh", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_refresh)])
+async def refresh(
+    refresh_in: TokenRefreshRequest,
+    request: Request,
+    service: IdentityService = Depends(get_identity_service)
+):
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    # Pre-parse token to extract session_id claim without signature validation first
+    # This is safe because verify_session does cryptographic verification on the db token hash
+    try:
+        from jose import jwt
+        from app.core.config import settings
+        # We decode unverified to extract session_id
+        unverified_claims = jwt.get_unverified_claims(refresh_in.refresh_token)
+        session_id_str = unverified_claims.get("session_id")
+        if not session_id_str:
+            raise ValueError()
+        session_id = uuid.UUID(session_id_str)
+    except Exception:
+        raise APIException(status.HTTP_401_UNAUTHORIZED, "INVALID_REFRESH_TOKEN", "Malformed or invalid refresh token")
+
+    try:
+        access_token, new_refresh_token = await service.refresh_tokens(
+            session_id, refresh_in.refresh_token, ip, user_agent
+        )
+        return {
+            "success": True,
+            "data": {
+                "access_token": access_token,
+                "refresh_token": new_refresh_token,
+                "token_type": "bearer"
+            }
+        }
+    except ValueError as e:
+        # Raises 401 on expired session or token reuse violation
+        raise APIException(status.HTTP_401_UNAUTHORIZED, "INVALID_REFRESH_TOKEN", str(e))
+
+@router.get("/me", status_code=status.HTTP_200_OK)
+async def me(user: User = Depends(get_current_user)):
+    return {
+        "success": True,
+        "data": format_user_data(user)
+    }
+
+@router.patch("/me", status_code=status.HTTP_200_OK)
+async def update_profile(
+    profile_in: ProfileUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    user_service = UserService(db)
+    updated_user = await user_service.update_profile(user.id, profile_in)
+    return {
+        "success": True,
+        "data": format_user_data(updated_user)
+    }
+
+@router.get("/session", status_code=status.HTTP_200_OK)
+async def session_details(user_and_session: tuple[User, UserSession] = Depends(get_current_user_and_session)):
+    _, session = user_and_session
+    return {
+        "success": True,
+        "data": {
+            "session_id": str(session.id),
+            "device_name": session.device_name,
+            "device_type": session.device_type,
+            "ip_address": session.ip_address,
+            "last_activity": session.last_activity.isoformat() if session.last_activity else None,
+            "expires_at": session.expires_at.isoformat()
+        }
+    }
