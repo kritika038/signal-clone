@@ -40,7 +40,7 @@ class UserSession(Base):
     )
     last_activity: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     expires_at: Mapped[datetime] = mapped_column(

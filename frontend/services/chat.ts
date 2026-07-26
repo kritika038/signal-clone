@@ -127,8 +127,8 @@ export async function createDirectConversation(token: string, participantId: str
   });
 }
 
-export async function fetchMessages(token: string, conversationId: string) {
-  return apiRequest<ApiMessage[]>(`/api/v1/conversations/${conversationId}/messages`, { token });
+export async function fetchMessages(token: string, conversationId: string, limit: number = 50, skip: number = 0) {
+  return apiRequest<ApiMessage[]>(`/api/v1/conversations/${conversationId}/messages?limit=${limit}&skip=${skip}`, { token });
 }
 
 export async function sendMessage(

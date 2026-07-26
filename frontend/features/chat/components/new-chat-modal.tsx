@@ -15,9 +15,10 @@ interface NewChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNewGroup?: () => void;
+  onNewContact?: () => void;
 }
 
-export function NewChatModal({ isOpen, onClose, onNewGroup }: NewChatModalProps) {
+export function NewChatModal({ isOpen, onClose, onNewGroup, onNewContact }: NewChatModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const { accessToken, user } = useSessionStore();
@@ -104,6 +105,15 @@ export function NewChatModal({ isOpen, onClose, onNewGroup }: NewChatModalProps)
                     <Users className="w-5 h-5 text-neutral-300" />
                   </div>
                   <span className="text-sm font-medium text-neutral-200">New Group</span>
+                </button>
+                <button
+                  onClick={onNewContact}
+                  className="mt-2 flex w-full items-center gap-3 rounded-lg p-2 hover:bg-neutral-800 transition-colors"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800 border border-neutral-700">
+                    <UserPlus className="w-5 h-5 text-neutral-300" />
+                  </div>
+                  <span className="text-sm font-medium text-neutral-200">Add New Contact</span>
                 </button>
               )}
             </div>

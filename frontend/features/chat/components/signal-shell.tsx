@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
@@ -39,7 +39,9 @@ import {
 } from "@/services/chat";
 import { NewChatModal } from "./new-chat-modal";
 import { CreateGroupModal } from "./create-group-modal";
+import { NewContactModal } from "./new-contact-modal";
 import { socketService } from "@/services/socket";
+import { fetchContacts } from "@/services/contacts";
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
 import type { Conversation } from "@/types/chat";
@@ -79,9 +81,12 @@ export function SignalShell() {
   const [groupName, setGroupName] = useState("");
   const [showNewGroup, setShowNewGroup] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showNewContact, setShowNewContact] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const deferredSearch = useDeferredValue(searchQuery);
 
   const meQuery = useQuery({
@@ -124,6 +129,12 @@ export function SignalShell() {
     enabled: Boolean(accessToken),
   });
 
+  const contactsQuery = useQuery({
+    queryKey: ["contacts", accessToken],
+    queryFn: () => fetchContacts(accessToken!),
+    enabled: Boolean(accessToken),
+  });
+
   const currentUserId = user?.id || meQuery.data?.id || "";
   const conversations = useMemo<Conversation[]>(
     () =>
@@ -153,11 +164,35 @@ export function SignalShell() {
     enabled: Boolean(accessToken && activeConversationId),
   });
 
-  const messagesQuery = useQuery({
+  const messagesQuery = useInfiniteQuery({
     queryKey: ["messages", activeConversationId, accessToken],
-    queryFn: () => fetchMessages(accessToken!, activeConversationId!),
+    queryFn: ({ pageParam }) => fetchMessages(accessToken!, activeConversationId!, 50, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 50) return undefined;
+      return allPages.length * 50;
+    },
     enabled: Boolean(accessToken && activeConversationId),
   });
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && messagesQuery.hasNextPage && !messagesQuery.isFetchingNextPage) {
+          messagesQuery.fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [messagesQuery.hasNextPage, messagesQuery.isFetchingNextPage, messagesQuery.fetchNextPage]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messagesQuery.data?.pages[0]]);
 
   const searchQueryResult = useQuery({
     queryKey: ["search", deferredSearch, accessToken],
@@ -165,10 +200,10 @@ export function SignalShell() {
     enabled: Boolean(accessToken && deferredSearch.trim().length > 0),
   });
 
-  const mappedMessages = useMemo(
-    () => (messagesQuery.data || []).map((message) => mapApiMessage(message, currentUserId)),
-    [messagesQuery.data, currentUserId]
-  );
+  const mappedMessages = useMemo(() => {
+    const allMessages = messagesQuery.data?.pages.flat() || [];
+    return [...allMessages].reverse().map((message) => mapApiMessage(message, currentUserId));
+  }, [messagesQuery.data, currentUserId]);
 
   const replyMessage = mappedMessages.find((message) => message.id === replyToMessageId) || null;
   const searchResults = useMemo(() => {
@@ -179,10 +214,11 @@ export function SignalShell() {
   }, [currentUserId, deferredSearch, searchQueryResult.data]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (overrideContent?: string) => {
       if (!accessToken || !activeConversationId) {
         throw new Error("No active conversation selected");
       }
+      const textToSend = overrideContent !== undefined ? overrideContent : composerText;
       const uploadedAttachments =
         queuedAttachments.length > 0
           ? await Promise.all(
@@ -192,12 +228,13 @@ export function SignalShell() {
             )
           : [];
       return sendMessage(accessToken, activeConversationId, {
-        content: composerText || null,
+        content: textToSend || null,
         reply_to_id: replyToMessageId,
         attachments: uploadedAttachments,
       });
     },
-    onMutate: async () => {
+    onMutate: async (overrideContent?: string) => {
+      const textToSend = overrideContent !== undefined ? overrideContent : composerText;
       await queryClient.cancelQueries({ queryKey: ["messages", activeConversationId] });
       const previousMessages = queryClient.getQueryData(["messages", activeConversationId]);
       
@@ -205,7 +242,7 @@ export function SignalShell() {
         id: crypto.randomUUID(),
         conversation_id: activeConversationId,
         sender_id: currentUserId,
-        content: composerText || null,
+        content: textToSend || null,
         message_type: "text",
         reply_to_id: replyToMessageId,
         is_outgoing: true,
@@ -219,7 +256,10 @@ export function SignalShell() {
       };
 
       queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
-        return old ? [...old, optimisticMessage] : [optimisticMessage];
+        if (!old) return { pages: [[optimisticMessage]], pageParams: [0] };
+        const newPages = [...old.pages];
+        newPages[0] = [optimisticMessage, ...newPages[0]];
+        return { ...old, pages: newPages };
       });
 
       setComposerText("");
@@ -227,12 +267,19 @@ export function SignalShell() {
       setReplyTarget(null);
       setFeatureNotice(null);
 
-      return { previousMessages };
+      return { previousMessages, optimisticMessage };
     },
-    onError: (error: Error, _, context) => {
+    onError: (error: Error, _, context: any) => {
       setFeatureNotice(error.message);
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["messages", activeConversationId], context.previousMessages);
+      if (context?.optimisticMessage) {
+        queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
+          if (!old) return old;
+          const newPages = [...old.pages];
+          newPages[0] = newPages[0].map((m: any) => 
+            m.id === context.optimisticMessage.id ? { ...m, status: "failed" } : m
+          );
+          return { ...old, pages: newPages };
+        });
       }
     },
     onSettled: async () => {
@@ -290,10 +337,22 @@ export function SignalShell() {
     const socket = socketService.connect(accessToken);
     const handleConnect = () => setSocketState(true, null);
     const handleDisconnect = () => setSocketState(false, "Reconnecting to Signal service…");
-    const handleIncomingChange = async () => {
+    const handleIncomingChange = async (data?: any) => {
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
       if (activeConversationId) {
         await queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
+        
+        // If this is a new message and it belongs to the active conversation, mark it read
+        if (data && data.message_id || data?.id) {
+          const msgId = data.message_id || data.id;
+          if (data.conversation_id === activeConversationId && data.sender_id !== currentUserId) {
+            socket.emit("message.read", { message_id: msgId });
+          }
+        }
+      } else if (data && (data.message_id || data.id) && data.sender_id !== currentUserId) {
+        // If it's a background message, mark it delivered
+        const msgId = data.message_id || data.id;
+        socket.emit("message.delivered", { message_id: msgId });
       }
     };
     const handleTypingStart = (data: { user_id: string; conversation_id: string }) => {
@@ -322,10 +381,8 @@ export function SignalShell() {
     socket.on("typing.stop", handleTypingStop);
     socket.emit("heartbeat");
     
-    // Mark messages as read
-    if (activeConversationId) {
-      socket.emit("message.read", { conversation_id: activeConversationId });
-    }
+    // Note: To properly mark all previous messages as read, we'd iterate unread ones.
+    // For now, we handle it actively as they arrive in handleIncomingChange.
 
     return () => {
       socket.off("connect", handleConnect);
@@ -514,6 +571,8 @@ export function SignalShell() {
             {/* Chat History */}
             <div className="flex-1 overflow-y-auto p-4">
               <div className="mx-auto max-w-3xl space-y-2">
+                <div ref={loadMoreRef} className="h-4 w-full" />
+                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 py-2">Loading older messages...</div>}
                 {messagesQuery.isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
@@ -569,9 +628,24 @@ export function SignalShell() {
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
                               {message.isOutgoing && (
-                                <span className={message.status === "read" ? "text-blue-900 font-bold" : ""}>
-                                  {message.status === "read" ? "✓✓" : message.status === "delivered" ? "✓✓" : "✓"}
+                                <span className={message.status === "read" ? "text-blue-900 font-bold" : message.status === "failed" ? "text-red-400" : ""}>
+                                  {message.status === "failed" ? "Failed" : message.status === "read" ? "✓✓" : message.status === "delivered" ? "✓✓" : "✓"}
                                 </span>
+                              )}
+                              {message.status === "failed" && (
+                                <button className="ml-2 text-blue-500 hover:underline" onClick={() => {
+                                  // Delete the failed message optimistic update
+                                  queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
+                                    if (!old) return old;
+                                    const newPages = [...old.pages];
+                                    newPages[0] = newPages[0].filter((m: any) => m.id !== message.id);
+                                    return { ...old, pages: newPages };
+                                  });
+                                  // Retry with the original content
+                                  sendMessageMutation.mutate(message.content || "");
+                                }}>
+                                  Retry
+                                </button>
                               )}
                             </div>
                             
@@ -603,6 +677,7 @@ export function SignalShell() {
                     <p className="text-xs">Send a message to start the conversation.</p>
                   </div>
                 )}
+                <div ref={messagesEndRef} className="h-1" />
               </div>
             </div>
 
@@ -673,8 +748,14 @@ export function SignalShell() {
 
       {/* Settings Overlay & Modals */}
       <SettingsPanel />
-      <NewChatModal isOpen={showNewChat} onClose={() => setShowNewChat(false)} onNewGroup={() => { setShowNewChat(false); setShowNewGroup(true); }} />
+      <NewChatModal 
+        isOpen={showNewChat} 
+        onClose={() => setShowNewChat(false)} 
+        onNewGroup={() => { setShowNewChat(false); setShowNewGroup(true); }} 
+        onNewContact={() => { setShowNewChat(false); setShowNewContact(true); }}
+      />
       <CreateGroupModal isOpen={showNewGroup} onClose={() => setShowNewGroup(false)} />
+      <NewContactModal isOpen={showNewContact} onClose={() => setShowNewContact(false)} />
 
       <input
         ref={fileInputRef}

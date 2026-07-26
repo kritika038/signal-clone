@@ -38,7 +38,7 @@ class ConversationMember(Base):
     )
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     left_at: Mapped[Optional[datetime]] = mapped_column(
