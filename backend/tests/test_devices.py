@@ -68,7 +68,6 @@ async def create_user_and_token(db: AsyncSession, phone: str = "+1111111111"):
         id=session_id,
         user_id=user_id,
         device_name="Test Phone",
-        token_family=uuid.uuid4(),
         refresh_token_hash="hash",
         expires_at=datetime.now(timezone.utc) + timedelta(days=7),
     )
