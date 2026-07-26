@@ -11,15 +11,17 @@ import { loginUser, registerUser, verifyOtp } from "@/services/auth";
 import { useSessionStore } from "@/store/use-session-store";
 
 type RegisterData = { phone: string; display_name: string; username: string; password: string };
+type RegisterStep = "phone" | "otp" | "register" | "profile";
+const STEPS: RegisterStep[] = ["phone", "otp", "register", "profile"];
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"welcome" | "login" | "register">("welcome");
-  const [registerStep, setRegisterStep] = useState<"phone" | "display_name" | "username" | "password" | "otp">("phone");
+  const [registerStep, setRegisterStep] = useState<RegisterStep>("phone");
   const [registerData, setRegisterData] = useState<RegisterData>({ phone: "", display_name: "", username: "", password: "" });
   const [loginId, setLoginId] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [mockOtp, setMockOtp] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState("");
   const setSession = useSessionStore((state) => state.setSession);
 
   const loginMutation = useMutation({
@@ -27,25 +29,33 @@ export function AuthScreen() {
     onSuccess: (payload) => setSession(payload),
   });
 
-  const registerMutation = useMutation({
-    mutationFn: registerUser,
-    onSuccess: (payload) => {
-      setMockOtp(payload.otp_mock);
-      setOtp(payload.otp_mock);
-      setRegisterStep("otp");
-    },
-  });
-
   const verifyMutation = useMutation({
     mutationFn: verifyOtp,
     onSuccess: (payload) => setSession(payload),
   });
 
+  const registerMutation = useMutation({
+    mutationFn: registerUser,
+    onSuccess: (payload) => {
+      // Backend actually returns an OTP, but we enforce "123456" in UI
+      // Immediately verify to create session
+      verifyMutation.mutate({ phone: registerData.phone, otp: otp });
+    },
+  });
+
   const handleRegisterNext = () => {
-    if (registerStep === "phone" && registerData.phone) setRegisterStep("display_name");
-    else if (registerStep === "display_name" && registerData.display_name) setRegisterStep("username");
-    else if (registerStep === "username" && registerData.username) setRegisterStep("password");
-    else if (registerStep === "password" && registerData.password) {
+    if (registerStep === "phone" && registerData.phone) {
+      setRegisterStep("otp");
+    } else if (registerStep === "otp") {
+      if (otp !== "123456") {
+        setOtpError("Invalid code. Hint: Use 123456");
+        return;
+      }
+      setOtpError("");
+      setRegisterStep("register");
+    } else if (registerStep === "register" && registerData.username && registerData.password) {
+      setRegisterStep("profile");
+    } else if (registerStep === "profile" && registerData.display_name) {
       registerMutation.mutate(registerData);
     }
   };
@@ -69,61 +79,62 @@ export function AuthScreen() {
         </motion.div>
       );
     }
-    if (registerStep === "display_name") {
+    if (registerStep === "otp") {
       return (
-        <motion.div key="display_name" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+        <motion.div key="otp" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+          <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-sm text-blue-200">
+            <div className="mb-1 flex items-center gap-2 font-medium text-blue-100">
+              <MessageSquareMore className="h-4 w-4" /> Mock OTP
+            </div>
+            <p>Code: <span className="font-bold text-white tracking-widest">123456</span></p>
+          </div>
+          <p className="text-sm text-neutral-400">Enter the 6-digit code sent to {registerData.phone}</p>
+          <Input className="bg-neutral-900 border-neutral-800 h-14 text-center tracking-[0.5em] text-2xl font-medium" placeholder="------" maxLength={6} value={otp} onChange={(e) => { setOtp(e.target.value); setOtpError(""); }} autoFocus onKeyDown={(e) => e.key === "Enter" && otp.length === 6 && handleRegisterNext()} />
+          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={otp.length !== 6}>
+            Verify Code
+          </Button>
+          {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
+        </motion.div>
+      );
+    }
+    if (registerStep === "register") {
+      return (
+        <motion.div key="register" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+          <p className="text-sm text-neutral-400">Choose a unique username and password.</p>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">@</span>
+            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-8 text-lg" placeholder="username" value={registerData.username} onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })} autoFocus />
+          </div>
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg" type="password" placeholder="Password" value={registerData.password} onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })} onKeyDown={(e) => e.key === "Enter" && handleRegisterNext()} />
+          </div>
+          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.username || !registerData.password}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+        </motion.div>
+      );
+    }
+    if (registerStep === "profile") {
+      return (
+        <motion.div key="profile" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
           <p className="text-sm text-neutral-400">How should people see you?</p>
+          <div className="flex justify-center mb-6">
+            <div className="relative group cursor-pointer">
+              <div className="h-24 w-24 rounded-full bg-neutral-800 flex items-center justify-center border-2 border-dashed border-neutral-700 group-hover:border-blue-500 transition-colors">
+                <User className="h-10 w-10 text-neutral-500 group-hover:text-blue-400 transition-colors" />
+              </div>
+              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-xs font-medium text-white">Add Photo</span>
+              </div>
+            </div>
+          </div>
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
             <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg" placeholder="Display Name" value={registerData.display_name} onChange={(e) => setRegisterData({ ...registerData, display_name: e.target.value })} autoFocus onKeyDown={(e) => e.key === "Enter" && handleRegisterNext()} />
           </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.display_name}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
-        </motion.div>
-      );
-    }
-    if (registerStep === "username") {
-      return (
-        <motion.div key="username" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Choose a unique username.</p>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">@</span>
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-8 text-lg" placeholder="username" value={registerData.username} onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })} autoFocus onKeyDown={(e) => e.key === "Enter" && handleRegisterNext()} />
-          </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.username}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
-        </motion.div>
-      );
-    }
-    if (registerStep === "password") {
-      return (
-        <motion.div key="password" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Secure your account with a password.</p>
-          <div className="relative">
-            <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg" type="password" placeholder="Password" value={registerData.password} onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })} autoFocus onKeyDown={(e) => e.key === "Enter" && handleRegisterNext()} />
-          </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.password || registerMutation.isPending}>
-            {registerMutation.isPending ? "Creating account..." : "Complete Registration"}
+          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.display_name || registerMutation.isPending || verifyMutation.isPending}>
+            {registerMutation.isPending || verifyMutation.isPending ? "Creating account..." : "Complete Registration"}
           </Button>
           {registerMutation.error ? <p className="text-sm text-red-400 text-center">{registerMutation.error.message}</p> : null}
-        </motion.div>
-      );
-    }
-    if (registerStep === "otp") {
-      return (
-        <motion.div key="otp" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          {mockOtp && (
-            <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-sm text-blue-200">
-              <div className="mb-1 flex items-center gap-2 font-medium text-blue-100">
-                <MessageSquareMore className="h-4 w-4" /> Mock OTP ready
-              </div>
-              <p>Code: <span className="font-bold text-white tracking-widest">{mockOtp}</span></p>
-            </div>
-          )}
-          <p className="text-sm text-neutral-400">Enter the 6-digit code sent to {registerData.phone}</p>
-          <Input className="bg-neutral-900 border-neutral-800 h-14 text-center tracking-[0.5em] text-2xl font-medium" placeholder="------" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value)} autoFocus onKeyDown={(e) => e.key === "Enter" && otp.length === 6 && verifyMutation.mutate({ phone: registerData.phone, otp })} />
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={() => verifyMutation.mutate({ phone: registerData.phone, otp })} disabled={otp.length !== 6 || verifyMutation.isPending}>
-            {verifyMutation.isPending ? "Verifying..." : "Verify Code"}
-          </Button>
           {verifyMutation.error ? <p className="text-sm text-red-400 text-center">{verifyMutation.error.message}</p> : null}
         </motion.div>
       );
@@ -139,15 +150,14 @@ export function AuthScreen() {
         
         {mode !== "welcome" && (
           <button className="absolute left-6 top-8 text-neutral-400 hover:text-white transition-colors" onClick={() => {
-            if (mode === "register" && registerStep !== "phone" && registerStep !== "otp") {
-              const steps: Array<"phone" | "display_name" | "username" | "password" | "otp"> = ["phone", "display_name", "username", "password", "otp"];
-              setRegisterStep(steps[steps.indexOf(registerStep) - 1]);
+            if (mode === "register" && registerStep !== "phone") {
+              setRegisterStep(STEPS[STEPS.indexOf(registerStep) - 1]);
             } else {
               setMode("welcome");
               setRegisterStep("phone");
               setRegisterData({ phone: "", display_name: "", username: "", password: "" });
               setOtp("");
-              setMockOtp(null);
+              setOtpError("");
             }
           }}>
             <ArrowLeft className="h-6 w-6" />
