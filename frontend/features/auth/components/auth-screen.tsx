@@ -291,65 +291,131 @@ export function AuthScreen() {
     }
     if (registerStep === "profile") {
       const isUsernameOk = usernameStatus === "available";
-      const isValid = registerData.display_name && isUsernameOk;
+      const isValid = registerData.display_name.trim().length > 0 && isUsernameOk;
       
       const isBase64Avatar = registerData.avatar_url.startsWith('data:image');
       const isColorAvatar = registerData.avatar_url.startsWith('bg-');
+      const initialLetter = registerData.display_name ? registerData.display_name.trim().charAt(0).toUpperCase() : "";
 
       return (
-        <motion.div key="profile" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4 max-h-[75vh] overflow-y-auto px-1 scrollbar-hide pb-4">
-          <p className="text-sm text-neutral-400">Complete your profile to finish registration.</p>
+        <motion.div key="profile" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-5 max-h-[75vh] overflow-y-auto px-2 scrollbar-hide pb-4">
+          <div className="text-center space-y-1 mb-4">
+            <h3 className="text-xl font-semibold text-white tracking-tight">Profile Setup</h3>
+            <p className="text-sm text-neutral-400">Complete your profile to finish registration.</p>
+          </div>
           
           <div className="flex flex-col items-center mb-6 space-y-4">
-            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handlePhotoUpload} />
+            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handlePhotoUpload} aria-label="Upload profile photo file input" />
             <div 
-              className={`relative h-24 w-24 rounded-full flex items-center justify-center border-4 border-neutral-800 shadow-xl overflow-hidden cursor-pointer group transition-all hover:border-neutral-700 ${isColorAvatar ? registerData.avatar_url : 'bg-neutral-800'}`}
+              className={`relative h-28 w-28 rounded-full flex items-center justify-center border-4 border-neutral-800 shadow-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:border-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 focus-visible:ring-offset-neutral-950 ${isColorAvatar ? registerData.avatar_url : 'bg-neutral-800'}`}
               onClick={() => fileInputRef.current?.click()}
+              tabIndex={0}
+              role="button"
+              aria-label="Upload profile photo"
+              onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
             >
               {isBase64Avatar ? (
                 <img src={registerData.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
-                <User className="h-10 w-10 text-white/50 group-hover:opacity-0 transition-opacity" />
+                <span className="text-5xl text-white/90 font-medium tracking-tight drop-shadow-md">
+                  {initialLetter || <User className="h-12 w-12 text-white/50 group-hover:opacity-0 transition-opacity" />}
+                </span>
               )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="h-6 w-6 text-white" />
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px]">
+                <Camera className="h-8 w-8 text-white drop-shadow-lg" />
               </div>
             </div>
             
-            <div className="grid grid-cols-6 gap-2 w-full max-w-[280px]">
-              {BUILT_IN_AVATARS.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setRegisterData({ ...registerData, avatar_url: color })}
-                  className={`h-8 w-8 rounded-full ${color} transition-all ${registerData.avatar_url === color ? 'ring-2 ring-white ring-offset-2 ring-offset-neutral-900 scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
-                  type="button"
-                />
-              ))}
-            </div>
-            <p className="text-xs text-neutral-500">Upload a photo or choose an avatar</p>
+            {isBase64Avatar && (
+              <button
+                type="button"
+                onClick={() => setRegisterData({ ...registerData, avatar_url: BUILT_IN_AVATARS[0] })}
+                className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors focus-visible:outline-none focus-visible:underline"
+                aria-label="Remove uploaded photo and revert to generated avatar"
+              >
+                Remove photo
+              </button>
+            )}
+            
+            {!isBase64Avatar && (
+              <div className="grid grid-cols-6 gap-3 w-full max-w-[280px]" role="radiogroup" aria-label="Select avatar color">
+                {BUILT_IN_AVATARS.map((color) => {
+                  const isSelected = registerData.avatar_url === color;
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => setRegisterData({ ...registerData, avatar_url: color })}
+                      className={`relative h-10 w-10 rounded-full ${color} transition-all duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 ${isSelected ? 'scale-110 shadow-lg shadow-white/10 ring-2 ring-white ring-offset-2 ring-offset-neutral-950' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      aria-label={`Select color ${color.replace('bg-', '').split('-')[0]}`}
+                    >
+                      <AnimatePresence>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          >
+                            <CheckCircle2 className="h-6 w-6 text-white/90 drop-shadow-md" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-3">
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-              <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-base focus-visible:ring-blue-500" placeholder="Display Name" value={registerData.display_name} onChange={(e) => setRegisterData({ ...registerData, display_name: e.target.value })} autoFocus />
+          <div className="space-y-4">
+            <div className="relative group">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500 group-focus-within:text-blue-500 transition-colors" aria-hidden="true" />
+              <Input 
+                className="bg-neutral-900 border-neutral-800 h-14 pl-11 text-base focus-visible:ring-blue-500 transition-all shadow-sm rounded-xl" 
+                placeholder="Display Name (Required)" 
+                value={registerData.display_name} 
+                onChange={(e) => setRegisterData({ ...registerData, display_name: e.target.value })} 
+                autoFocus 
+                aria-required="true"
+                aria-label="Display Name"
+              />
             </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">@</span>
-              <Input className="bg-neutral-900 border-neutral-800 h-12 pl-8 pr-10 text-base focus-visible:ring-blue-500" placeholder="Username" value={registerData.username} onChange={(e) => setRegisterData({ ...registerData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })} onKeyDown={(e) => e.key === "Enter" && isValid && handleRegisterNext()}/>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                {usernameStatus === "checking" && <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />}
-                {usernameStatus === "available" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                {usernameStatus === "taken" && <XCircle className="h-5 w-5 text-red-500" />}
+            <div className="relative group">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 font-medium group-focus-within:text-blue-500 transition-colors" aria-hidden="true">@</span>
+              <Input 
+                className="bg-neutral-900 border-neutral-800 h-14 pl-9 pr-12 text-base focus-visible:ring-blue-500 transition-all shadow-sm rounded-xl" 
+                placeholder="Username (Required)" 
+                value={registerData.username} 
+                onChange={(e) => setRegisterData({ ...registerData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })} 
+                onKeyDown={(e) => e.key === "Enter" && isValid && handleRegisterNext()}
+                aria-required="true"
+                aria-label="Username"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                {usernameStatus === "checking" && <Loader2 className="h-5 w-5 animate-spin text-neutral-500" aria-label="Checking username availability" />}
+                {usernameStatus === "available" && <CheckCircle2 className="h-5 w-5 text-green-500" aria-label="Username available" />}
+                {usernameStatus === "taken" && <XCircle className="h-5 w-5 text-red-500" aria-label="Username taken" />}
               </div>
             </div>
           </div>
 
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={handleRegisterNext} disabled={!isValid || registerMutation.isPending}>
-            {registerMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button 
+            className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg mt-6 transition-all rounded-xl shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:shadow-none" 
+            onClick={handleRegisterNext} 
+            disabled={!isValid || registerMutation.isPending}
+            aria-disabled={!isValid || registerMutation.isPending}
+          >
+            {registerMutation.isPending ? <Loader2 className="mr-3 h-5 w-5 animate-spin" /> : null}
             {registerMutation.isPending ? "Creating account..." : "Complete Registration"}
           </Button>
-          {registerMutation.error ? <p className="text-sm text-red-400 text-center">{registerMutation.error.message}</p> : null}
+          {registerMutation.error ? (
+            <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-sm text-red-400 text-center bg-red-950/50 p-2 rounded-lg border border-red-900/50">
+              {registerMutation.error.message}
+            </motion.p>
+          ) : null}
         </motion.div>
       );
     }
