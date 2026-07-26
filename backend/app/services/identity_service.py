@@ -62,15 +62,28 @@ class IdentityService:
             self._log_auth_event("OTP_VERIFICATION_FAILURE", None, None, ip, device, f"Phone: {phone}")
             raise ValueError("Invalid or expired OTP code")
         
-        registration_token = f"mock-token-{phone}"
+        # Generate a durable, real server-side registration token
+        registration_token = f"reg_{uuid.uuid4().hex}"
+        
+        # Store in OTP/registration store to survive the next request and ensure it's consumed exactly once
+        await self.otp_store.create(
+            identifier=registration_token,
+            registration_payload={"phone": phone},
+            otp=registration_token,
+            ttl_seconds=3600
+        )
+        
         return registration_token
 
     async def register(self, register_in: UserRegister, ip: Optional[str], device: Optional[str]) -> Tuple[User, UserSession, str, str]:
-        # Validate registration token
-        if not register_in.registration_token.startswith("mock-token-"):
+        # Validate registration token against server state and consume it exactly once
+        payload = await self.otp_store.verify(register_in.registration_token, register_in.registration_token)
+        if not payload:
             raise ValueError("Invalid or expired registration token")
             
-        phone = register_in.registration_token.replace("mock-token-", "")
+        phone = payload.get("phone")
+        if not phone:
+            raise ValueError("Invalid registration payload state")
 
         # Create user
         phone_user = await self.user_service.get_by_phone(phone)
