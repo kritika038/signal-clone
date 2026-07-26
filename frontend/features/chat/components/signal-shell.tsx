@@ -466,7 +466,7 @@ export function SignalShell() {
                             <div className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500"}`}>
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
-                              {message.isOutgoing && <span>{message.status === "READ" ? "✓✓" : message.status === "DELIVERED" ? "✓✓" : "✓"}</span>}
+                              {message.isOutgoing && <span>{message.status === "read" ? "✓✓" : message.status === "delivered" ? "✓✓" : "✓"}</span>}
                             </div>
                             
                             {/* Message Actions (Hover) */}
