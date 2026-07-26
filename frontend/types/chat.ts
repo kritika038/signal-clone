@@ -39,7 +39,7 @@ export interface ChatMessage {
   senderId: string;
   content: string;
   timestamp: string;
-  status: "sending" | "sent" | "delivered" | "read";
+  status: "sending" | "sent" | "delivered" | "read" | "failed";
   isOutgoing: boolean;
   isEdited?: boolean;
   quotedMessageId?: string;
