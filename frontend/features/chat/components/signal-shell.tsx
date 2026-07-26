@@ -40,6 +40,7 @@ import {
 import { NewChatModal } from "./new-chat-modal";
 import { CreateGroupModal } from "./create-group-modal";
 import { NewContactModal } from "./new-contact-modal";
+import { ConversationInfoModal } from "./conversation-info-modal";
 import { socketService } from "@/services/socket";
 import { fetchContacts } from "@/services/contacts";
 import { useSessionStore } from "@/store/use-session-store";
@@ -82,6 +83,7 @@ export function SignalShell() {
   const [showNewGroup, setShowNewGroup] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [showNewContact, setShowNewContact] = useState(false);
+  const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -562,7 +564,7 @@ export function SignalShell() {
                 <ToolbarIcon label="Search">
                   <Search className="h-4 w-4" />
                 </ToolbarIcon>
-                <ToolbarIcon label="Conversation Info" onClick={() => openSettings("about")}>
+                <ToolbarIcon label="Conversation Info" onClick={() => setShowConversationInfo(true)}>
                   <Settings className="h-4 w-4" />
                 </ToolbarIcon>
               </div>
@@ -756,6 +758,7 @@ export function SignalShell() {
       />
       <CreateGroupModal isOpen={showNewGroup} onClose={() => setShowNewGroup(false)} />
       <NewContactModal isOpen={showNewContact} onClose={() => setShowNewContact(false)} />
+      <ConversationInfoModal isOpen={showConversationInfo} onClose={() => setShowConversationInfo(false)} />
 
       <input
         ref={fileInputRef}
