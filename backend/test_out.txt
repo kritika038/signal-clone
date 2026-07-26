@@ -1,0 +1,1251 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/kritikabansal/Desktop/signal-clone/backend
+plugins: asyncio-1.4.0, anyio-4.14.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests/test_auth.py F                                                     [100%]
+
+=================================== FAILURES ===================================
+____________________ test_full_auth_registration_lifecycle _____________________
+tests/test_auth.py:142: in test_full_auth_registration_lifecycle
+    assert reg_res.status_code == 200
+E   assert 400 == 200
+E    +  where 400 = <Response [400 Bad Request]>.status_code
+---------------------------- Captured stdout setup -----------------------------
+2026-07-26 21:38:28,433 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-26 21:38:28,433 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("users")
+2026-07-26 21:38:28,433 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,433 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("users")
+2026-07-26 21:38:28,433 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user_sessions")
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("user_sessions")
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user_settings")
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("user_settings")
+2026-07-26 21:38:28,434 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("contacts")
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("contacts")
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("blocked_users")
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("blocked_users")
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversations")
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("conversations")
+2026-07-26 21:38:28,435 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversation_members")
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("conversation_members")
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversation_preferences")
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("conversation_preferences")
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("messages")
+2026-07-26 21:38:28,436 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("messages")
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("message_receipts")
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("message_receipts")
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("message_reactions")
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("message_reactions")
+2026-07-26 21:38:28,437 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("attachments")
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("attachments")
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("typing_statuses")
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("typing_statuses")
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("notifications")
+2026-07-26 21:38:28,438 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("notifications")
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("device_tokens")
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("device_tokens")
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversation_drafts")
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("conversation_drafts")
+2026-07-26 21:38:28,439 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("starred_messages")
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("starred_messages")
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("messages_deleted_for_me")
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("messages_deleted_for_me")
+2026-07-26 21:38:28,440 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,441 INFO sqlalchemy.engine.Engine 
+CREATE TABLE users (
+	id CHAR(32) NOT NULL, 
+	phone VARCHAR(20) NOT NULL, 
+	email VARCHAR(255), 
+	username VARCHAR(50), 
+	display_name VARCHAR(100), 
+	bio VARCHAR(255), 
+	avatar_url VARCHAR(255), 
+	last_seen DATETIME, 
+	presence_status VARCHAR(14) NOT NULL, 
+	is_verified BOOLEAN NOT NULL, 
+	hashed_password VARCHAR(255) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id)
+)
+
+
+2026-07-26 21:38:28,441 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,441 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_users_username ON users (username)
+2026-07-26 21:38:28,441 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,442 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_users_email ON users (email)
+2026-07-26 21:38:28,442 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,442 INFO sqlalchemy.engine.Engine CREATE INDEX ix_users_display_name ON users (display_name)
+2026-07-26 21:38:28,442 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,443 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_users_phone ON users (phone)
+2026-07-26 21:38:28,443 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,444 INFO sqlalchemy.engine.Engine 
+CREATE TABLE user_sessions (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	refresh_token_hash VARCHAR(255) NOT NULL, 
+	device_name VARCHAR(100), 
+	device_type VARCHAR(50), 
+	ip_address VARCHAR(45), 
+	last_activity DATETIME NOT NULL, 
+	expires_at DATETIME NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,444 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,444 INFO sqlalchemy.engine.Engine CREATE INDEX ix_user_sessions_refresh_token_hash ON user_sessions (refresh_token_hash)
+2026-07-26 21:38:28,444 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,445 INFO sqlalchemy.engine.Engine CREATE INDEX ix_user_sessions_user_id ON user_sessions (user_id)
+2026-07-26 21:38:28,445 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,445 INFO sqlalchemy.engine.Engine 
+CREATE TABLE user_settings (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	theme VARCHAR(20) NOT NULL, 
+	language VARCHAR(10) NOT NULL, 
+	privacy_last_seen VARCHAR(20) NOT NULL, 
+	privacy_profile_photo VARCHAR(20) NOT NULL, 
+	privacy_read_receipts BOOLEAN NOT NULL, 
+	privacy_typing_indicator BOOLEAN NOT NULL, 
+	notifications_enabled BOOLEAN NOT NULL, 
+	auto_download_media BOOLEAN NOT NULL, 
+	default_disappearing_timer INTEGER NOT NULL, 
+	font_size VARCHAR(10) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,445 INFO sqlalchemy.engine.Engine [no key 0.00004s] ()
+2026-07-26 21:38:28,446 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_user_settings_user_id ON user_settings (user_id)
+2026-07-26 21:38:28,446 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,446 INFO sqlalchemy.engine.Engine 
+CREATE TABLE contacts (
+	id CHAR(32) NOT NULL, 
+	owner_id CHAR(32) NOT NULL, 
+	contact_user_id CHAR(32) NOT NULL, 
+	nickname VARCHAR(100), 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_contacts_owner_contact UNIQUE (owner_id, contact_user_id), 
+	FOREIGN KEY(owner_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(contact_user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,446 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,447 INFO sqlalchemy.engine.Engine CREATE INDEX ix_contacts_owner_id ON contacts (owner_id)
+2026-07-26 21:38:28,447 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,447 INFO sqlalchemy.engine.Engine CREATE INDEX ix_contacts_contact_user_id ON contacts (contact_user_id)
+2026-07-26 21:38:28,447 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,448 INFO sqlalchemy.engine.Engine 
+CREATE TABLE blocked_users (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	blocked_user_id CHAR(32) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_blocked_users_user_blocked UNIQUE (user_id, blocked_user_id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(blocked_user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,448 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,448 INFO sqlalchemy.engine.Engine CREATE INDEX ix_blocked_users_blocked_user_id ON blocked_users (blocked_user_id)
+2026-07-26 21:38:28,448 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,449 INFO sqlalchemy.engine.Engine CREATE INDEX ix_blocked_users_user_id ON blocked_users (user_id)
+2026-07-26 21:38:28,449 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,449 INFO sqlalchemy.engine.Engine 
+CREATE TABLE conversations (
+	id CHAR(32) NOT NULL, 
+	type VARCHAR(6) NOT NULL, 
+	name VARCHAR(100), 
+	description VARCHAR(255), 
+	avatar_url VARCHAR(255), 
+	created_by CHAR(32), 
+	updated_by CHAR(32), 
+	last_message_id CHAR(32), 
+	last_activity_at DATETIME NOT NULL, 
+	is_archived BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(created_by) REFERENCES users (id) ON DELETE SET NULL, 
+	FOREIGN KEY(updated_by) REFERENCES users (id) ON DELETE SET NULL, 
+	CONSTRAINT fk_conv_last_msg FOREIGN KEY(last_message_id) REFERENCES messages (id) ON DELETE SET NULL
+)
+
+
+2026-07-26 21:38:28,449 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,450 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversations_type ON conversations (type)
+2026-07-26 21:38:28,450 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,450 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversations_last_activity_at ON conversations (last_activity_at)
+2026-07-26 21:38:28,450 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,451 INFO sqlalchemy.engine.Engine 
+CREATE TABLE device_tokens (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	device_id VARCHAR(255) NOT NULL, 
+	platform VARCHAR(50) NOT NULL, 
+	fcm_token VARCHAR(512) NOT NULL, 
+	last_seen DATETIME NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_device_tokens_user_device UNIQUE (user_id, device_id), 
+	CONSTRAINT uq_device_tokens_fcm_token UNIQUE (fcm_token), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,451 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,451 INFO sqlalchemy.engine.Engine CREATE INDEX ix_device_tokens_device_id ON device_tokens (device_id)
+2026-07-26 21:38:28,451 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,452 INFO sqlalchemy.engine.Engine CREATE INDEX ix_device_tokens_user_id ON device_tokens (user_id)
+2026-07-26 21:38:28,452 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,452 INFO sqlalchemy.engine.Engine CREATE INDEX ix_device_tokens_fcm_token ON device_tokens (fcm_token)
+2026-07-26 21:38:28,452 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,453 INFO sqlalchemy.engine.Engine 
+CREATE TABLE conversation_members (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	role VARCHAR(6) NOT NULL, 
+	nickname VARCHAR(100), 
+	joined_at DATETIME NOT NULL, 
+	left_at DATETIME, 
+	notifications_enabled BOOLEAN NOT NULL, 
+	last_read_message_id CHAR(32), 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_conv_members_conv_user UNIQUE (conversation_id, user_id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	CONSTRAINT fk_member_last_read FOREIGN KEY(last_read_message_id) REFERENCES messages (id) ON DELETE SET NULL
+)
+
+
+2026-07-26 21:38:28,453 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,453 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversation_members_conversation_id ON conversation_members (conversation_id)
+2026-07-26 21:38:28,454 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,454 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversation_members_user_id ON conversation_members (user_id)
+2026-07-26 21:38:28,454 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,455 INFO sqlalchemy.engine.Engine 
+CREATE TABLE conversation_preferences (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	is_pinned BOOLEAN NOT NULL, 
+	is_muted BOOLEAN NOT NULL, 
+	mute_until DATETIME, 
+	wallpaper VARCHAR(255), 
+	custom_notification VARCHAR(100), 
+	notification_sound VARCHAR(100), 
+	disappearing_timer INTEGER NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_conv_prefs_conv_user UNIQUE (conversation_id, user_id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,455 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,455 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversation_preferences_conversation_id ON conversation_preferences (conversation_id)
+2026-07-26 21:38:28,455 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,456 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversation_preferences_user_id ON conversation_preferences (user_id)
+2026-07-26 21:38:28,456 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,456 INFO sqlalchemy.engine.Engine 
+CREATE TABLE messages (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	sender_id CHAR(32) NOT NULL, 
+	content TEXT, 
+	message_type VARCHAR(6) NOT NULL, 
+	reply_to_id CHAR(32), 
+	edited_at DATETIME, 
+	expires_at DATETIME, 
+	forwarded_from_id CHAR(32), 
+	is_system BOOLEAN NOT NULL, 
+	client_message_id VARCHAR(100), 
+	scheduled_at DATETIME, 
+	is_draft BOOLEAN NOT NULL, 
+	is_pinned BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(sender_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(reply_to_id) REFERENCES messages (id) ON DELETE SET NULL, 
+	FOREIGN KEY(forwarded_from_id) REFERENCES users (id) ON DELETE SET NULL
+)
+
+
+2026-07-26 21:38:28,456 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,457 INFO sqlalchemy.engine.Engine CREATE INDEX idx_messages_created ON messages (created_at)
+2026-07-26 21:38:28,457 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,457 INFO sqlalchemy.engine.Engine CREATE INDEX ix_messages_client_message_id ON messages (client_message_id)
+2026-07-26 21:38:28,457 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,457 INFO sqlalchemy.engine.Engine CREATE INDEX idx_messages_conv_created ON messages (conversation_id, created_at)
+2026-07-26 21:38:28,458 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,458 INFO sqlalchemy.engine.Engine CREATE INDEX ix_messages_scheduled_at ON messages (scheduled_at)
+2026-07-26 21:38:28,458 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,458 INFO sqlalchemy.engine.Engine CREATE INDEX ix_messages_sender_id ON messages (sender_id)
+2026-07-26 21:38:28,458 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,459 INFO sqlalchemy.engine.Engine CREATE INDEX ix_messages_conversation_id ON messages (conversation_id)
+2026-07-26 21:38:28,459 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,459 INFO sqlalchemy.engine.Engine 
+CREATE TABLE typing_statuses (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	is_typing BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,459 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,460 INFO sqlalchemy.engine.Engine CREATE INDEX ix_typing_statuses_user_id ON typing_statuses (user_id)
+2026-07-26 21:38:28,460 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,460 INFO sqlalchemy.engine.Engine CREATE INDEX ix_typing_statuses_conversation_id ON typing_statuses (conversation_id)
+2026-07-26 21:38:28,460 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,461 INFO sqlalchemy.engine.Engine 
+CREATE TABLE conversation_drafts (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	content TEXT NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_conv_drafts_conv_user UNIQUE (conversation_id, user_id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,461 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,461 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversation_drafts_user_id ON conversation_drafts (user_id)
+2026-07-26 21:38:28,461 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,462 INFO sqlalchemy.engine.Engine CREATE INDEX ix_conversation_drafts_conversation_id ON conversation_drafts (conversation_id)
+2026-07-26 21:38:28,462 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,462 INFO sqlalchemy.engine.Engine 
+CREATE TABLE message_receipts (
+	id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	status VARCHAR(9) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_message_receipts_msg_user UNIQUE (message_id, user_id), 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,462 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,463 INFO sqlalchemy.engine.Engine CREATE INDEX ix_message_receipts_user_id ON message_receipts (user_id)
+2026-07-26 21:38:28,463 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,463 INFO sqlalchemy.engine.Engine CREATE INDEX ix_message_receipts_message_id ON message_receipts (message_id)
+2026-07-26 21:38:28,463 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,464 INFO sqlalchemy.engine.Engine 
+CREATE TABLE message_reactions (
+	id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	reaction VARCHAR(50) NOT NULL, 
+	unicode VARCHAR(20) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_reactions_msg_user_react UNIQUE (message_id, user_id, reaction), 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,464 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,464 INFO sqlalchemy.engine.Engine CREATE INDEX ix_message_reactions_user_id ON message_reactions (user_id)
+2026-07-26 21:38:28,464 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,465 INFO sqlalchemy.engine.Engine CREATE INDEX ix_message_reactions_message_id ON message_reactions (message_id)
+2026-07-26 21:38:28,465 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,465 INFO sqlalchemy.engine.Engine 
+CREATE TABLE attachments (
+	id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	storage_key VARCHAR(255) NOT NULL, 
+	original_filename VARCHAR(255) NOT NULL, 
+	mime_type VARCHAR(100) NOT NULL, 
+	size INTEGER NOT NULL, 
+	width INTEGER, 
+	height INTEGER, 
+	duration INTEGER, 
+	thumbnail_url VARCHAR(255), 
+	checksum VARCHAR(64), 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE, 
+	UNIQUE (storage_key)
+)
+
+
+2026-07-26 21:38:28,465 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,466 INFO sqlalchemy.engine.Engine CREATE INDEX ix_attachments_message_id ON attachments (message_id)
+2026-07-26 21:38:28,466 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,466 INFO sqlalchemy.engine.Engine 
+CREATE TABLE notifications (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	message_id CHAR(32), 
+	type VARCHAR(50) NOT NULL, 
+	is_read BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,466 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,467 INFO sqlalchemy.engine.Engine CREATE INDEX ix_notifications_message_id ON notifications (message_id)
+2026-07-26 21:38:28,467 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,467 INFO sqlalchemy.engine.Engine CREATE INDEX ix_notifications_user_id ON notifications (user_id)
+2026-07-26 21:38:28,467 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,468 INFO sqlalchemy.engine.Engine 
+CREATE TABLE starred_messages (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_starred_messages_user_msg UNIQUE (user_id, message_id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,468 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,468 INFO sqlalchemy.engine.Engine CREATE INDEX ix_starred_messages_user_id ON starred_messages (user_id)
+2026-07-26 21:38:28,468 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,468 INFO sqlalchemy.engine.Engine CREATE INDEX ix_starred_messages_message_id ON starred_messages (message_id)
+2026-07-26 21:38:28,468 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,469 INFO sqlalchemy.engine.Engine 
+CREATE TABLE messages_deleted_for_me (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_msg_deleted_for_me_user_msg UNIQUE (user_id, message_id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE
+)
+
+
+2026-07-26 21:38:28,469 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,469 INFO sqlalchemy.engine.Engine CREATE INDEX ix_messages_deleted_for_me_message_id ON messages_deleted_for_me (message_id)
+2026-07-26 21:38:28,469 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,470 INFO sqlalchemy.engine.Engine CREATE INDEX ix_messages_deleted_for_me_user_id ON messages_deleted_for_me (user_id)
+2026-07-26 21:38:28,470 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,470 INFO sqlalchemy.engine.Engine COMMIT
+------------------------------ Captured log setup ------------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("users")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("users")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("user_sessions")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("user_sessions")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("user_settings")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("user_settings")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("contacts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("contacts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("blocked_users")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("blocked_users")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversations")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("conversations")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversation_members")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("conversation_members")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversation_preferences")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("conversation_preferences")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("messages")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("messages")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("message_receipts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("message_receipts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("message_reactions")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("message_reactions")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("attachments")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("attachments")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("typing_statuses")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("typing_statuses")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("notifications")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("notifications")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("device_tokens")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("device_tokens")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversation_drafts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("conversation_drafts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("starred_messages")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("starred_messages")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("messages_deleted_for_me")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("messages_deleted_for_me")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE users (
+	id CHAR(32) NOT NULL, 
+	phone VARCHAR(20) NOT NULL, 
+	email VARCHAR(255), 
+	username VARCHAR(50), 
+	display_name VARCHAR(100), 
+	bio VARCHAR(255), 
+	avatar_url VARCHAR(255), 
+	last_seen DATETIME, 
+	presence_status VARCHAR(14) NOT NULL, 
+	is_verified BOOLEAN NOT NULL, 
+	hashed_password VARCHAR(255) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE UNIQUE INDEX ix_users_username ON users (username)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE UNIQUE INDEX ix_users_email ON users (email)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_users_display_name ON users (display_name)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE UNIQUE INDEX ix_users_phone ON users (phone)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE user_sessions (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	refresh_token_hash VARCHAR(255) NOT NULL, 
+	device_name VARCHAR(100), 
+	device_type VARCHAR(50), 
+	ip_address VARCHAR(45), 
+	last_activity DATETIME NOT NULL, 
+	expires_at DATETIME NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_user_sessions_refresh_token_hash ON user_sessions (refresh_token_hash)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_user_sessions_user_id ON user_sessions (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE user_settings (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	theme VARCHAR(20) NOT NULL, 
+	language VARCHAR(10) NOT NULL, 
+	privacy_last_seen VARCHAR(20) NOT NULL, 
+	privacy_profile_photo VARCHAR(20) NOT NULL, 
+	privacy_read_receipts BOOLEAN NOT NULL, 
+	privacy_typing_indicator BOOLEAN NOT NULL, 
+	notifications_enabled BOOLEAN NOT NULL, 
+	auto_download_media BOOLEAN NOT NULL, 
+	default_disappearing_timer INTEGER NOT NULL, 
+	font_size VARCHAR(10) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00004s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE UNIQUE INDEX ix_user_settings_user_id ON user_settings (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE contacts (
+	id CHAR(32) NOT NULL, 
+	owner_id CHAR(32) NOT NULL, 
+	contact_user_id CHAR(32) NOT NULL, 
+	nickname VARCHAR(100), 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_contacts_owner_contact UNIQUE (owner_id, contact_user_id), 
+	FOREIGN KEY(owner_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(contact_user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_contacts_owner_id ON contacts (owner_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_contacts_contact_user_id ON contacts (contact_user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE blocked_users (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	blocked_user_id CHAR(32) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_blocked_users_user_blocked UNIQUE (user_id, blocked_user_id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(blocked_user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_blocked_users_blocked_user_id ON blocked_users (blocked_user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_blocked_users_user_id ON blocked_users (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE conversations (
+	id CHAR(32) NOT NULL, 
+	type VARCHAR(6) NOT NULL, 
+	name VARCHAR(100), 
+	description VARCHAR(255), 
+	avatar_url VARCHAR(255), 
+	created_by CHAR(32), 
+	updated_by CHAR(32), 
+	last_message_id CHAR(32), 
+	last_activity_at DATETIME NOT NULL, 
+	is_archived BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(created_by) REFERENCES users (id) ON DELETE SET NULL, 
+	FOREIGN KEY(updated_by) REFERENCES users (id) ON DELETE SET NULL, 
+	CONSTRAINT fk_conv_last_msg FOREIGN KEY(last_message_id) REFERENCES messages (id) ON DELETE SET NULL
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversations_type ON conversations (type)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversations_last_activity_at ON conversations (last_activity_at)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE device_tokens (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	device_id VARCHAR(255) NOT NULL, 
+	platform VARCHAR(50) NOT NULL, 
+	fcm_token VARCHAR(512) NOT NULL, 
+	last_seen DATETIME NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_device_tokens_user_device UNIQUE (user_id, device_id), 
+	CONSTRAINT uq_device_tokens_fcm_token UNIQUE (fcm_token), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_device_tokens_device_id ON device_tokens (device_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_device_tokens_user_id ON device_tokens (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_device_tokens_fcm_token ON device_tokens (fcm_token)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE conversation_members (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	role VARCHAR(6) NOT NULL, 
+	nickname VARCHAR(100), 
+	joined_at DATETIME NOT NULL, 
+	left_at DATETIME, 
+	notifications_enabled BOOLEAN NOT NULL, 
+	last_read_message_id CHAR(32), 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_conv_members_conv_user UNIQUE (conversation_id, user_id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	CONSTRAINT fk_member_last_read FOREIGN KEY(last_read_message_id) REFERENCES messages (id) ON DELETE SET NULL
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversation_members_conversation_id ON conversation_members (conversation_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversation_members_user_id ON conversation_members (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE conversation_preferences (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	is_pinned BOOLEAN NOT NULL, 
+	is_muted BOOLEAN NOT NULL, 
+	mute_until DATETIME, 
+	wallpaper VARCHAR(255), 
+	custom_notification VARCHAR(100), 
+	notification_sound VARCHAR(100), 
+	disappearing_timer INTEGER NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_conv_prefs_conv_user UNIQUE (conversation_id, user_id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversation_preferences_conversation_id ON conversation_preferences (conversation_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversation_preferences_user_id ON conversation_preferences (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE messages (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	sender_id CHAR(32) NOT NULL, 
+	content TEXT, 
+	message_type VARCHAR(6) NOT NULL, 
+	reply_to_id CHAR(32), 
+	edited_at DATETIME, 
+	expires_at DATETIME, 
+	forwarded_from_id CHAR(32), 
+	is_system BOOLEAN NOT NULL, 
+	client_message_id VARCHAR(100), 
+	scheduled_at DATETIME, 
+	is_draft BOOLEAN NOT NULL, 
+	is_pinned BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(sender_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(reply_to_id) REFERENCES messages (id) ON DELETE SET NULL, 
+	FOREIGN KEY(forwarded_from_id) REFERENCES users (id) ON DELETE SET NULL
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX idx_messages_created ON messages (created_at)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_messages_client_message_id ON messages (client_message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX idx_messages_conv_created ON messages (conversation_id, created_at)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_messages_scheduled_at ON messages (scheduled_at)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_messages_sender_id ON messages (sender_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_messages_conversation_id ON messages (conversation_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE typing_statuses (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	is_typing BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_typing_statuses_user_id ON typing_statuses (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_typing_statuses_conversation_id ON typing_statuses (conversation_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE conversation_drafts (
+	id CHAR(32) NOT NULL, 
+	conversation_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	content TEXT NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_conv_drafts_conv_user UNIQUE (conversation_id, user_id), 
+	FOREIGN KEY(conversation_id) REFERENCES conversations (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversation_drafts_user_id ON conversation_drafts (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_conversation_drafts_conversation_id ON conversation_drafts (conversation_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE message_receipts (
+	id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	status VARCHAR(9) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_message_receipts_msg_user UNIQUE (message_id, user_id), 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_message_receipts_user_id ON message_receipts (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_message_receipts_message_id ON message_receipts (message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE message_reactions (
+	id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	reaction VARCHAR(50) NOT NULL, 
+	unicode VARCHAR(20) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_reactions_msg_user_react UNIQUE (message_id, user_id, reaction), 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE, 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_message_reactions_user_id ON message_reactions (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_message_reactions_message_id ON message_reactions (message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE attachments (
+	id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	storage_key VARCHAR(255) NOT NULL, 
+	original_filename VARCHAR(255) NOT NULL, 
+	mime_type VARCHAR(100) NOT NULL, 
+	size INTEGER NOT NULL, 
+	width INTEGER, 
+	height INTEGER, 
+	duration INTEGER, 
+	thumbnail_url VARCHAR(255), 
+	checksum VARCHAR(64), 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE, 
+	UNIQUE (storage_key)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_attachments_message_id ON attachments (message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE notifications (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	message_id CHAR(32), 
+	type VARCHAR(50) NOT NULL, 
+	is_read BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_notifications_message_id ON notifications (message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_notifications_user_id ON notifications (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE starred_messages (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_starred_messages_user_msg UNIQUE (user_id, message_id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_starred_messages_user_id ON starred_messages (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_starred_messages_message_id ON starred_messages (message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE messages_deleted_for_me (
+	id CHAR(32) NOT NULL, 
+	user_id CHAR(32) NOT NULL, 
+	message_id CHAR(32) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	deleted_at DATETIME, 
+	PRIMARY KEY (id), 
+	CONSTRAINT uq_msg_deleted_for_me_user_msg UNIQUE (user_id, message_id), 
+	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+	FOREIGN KEY(message_id) REFERENCES messages (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_messages_deleted_for_me_message_id ON messages_deleted_for_me (message_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 CREATE INDEX ix_messages_deleted_for_me_user_id ON messages_deleted_for_me (user_id)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+----------------------------- Captured stdout call -----------------------------
+2026-07-26 21:38:28,494 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-26 21:38:28,495 INFO sqlalchemy.engine.Engine SELECT users.id, users.phone, users.email, users.username, users.display_name, users.bio, users.avatar_url, users.last_seen, users.presence_status, users.is_verified, users.hashed_password, users.created_at, users.updated_at, users.deleted_at 
+FROM users 
+WHERE users.phone = ? AND users.deleted_at IS NULL
+2026-07-26 21:38:28,495 INFO sqlalchemy.engine.Engine [generated in 0.00008s] ('+15555550001',)
+2026-07-26 21:38:28,496 INFO sqlalchemy.engine.Engine SELECT users.id, users.phone, users.email, users.username, users.display_name, users.bio, users.avatar_url, users.last_seen, users.presence_status, users.is_verified, users.hashed_password, users.created_at, users.updated_at, users.deleted_at 
+FROM users 
+WHERE users.username = ? AND users.deleted_at IS NULL
+2026-07-26 21:38:28,496 INFO sqlalchemy.engine.Engine [generated in 0.00005s] ('alice@example.com',)
+------------------------------ Captured log call -------------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT users.id, users.phone, users.email, users.username, users.display_name, users.bio, users.avatar_url, users.last_seen, users.presence_status, users.is_verified, users.hashed_password, users.created_at, users.updated_at, users.deleted_at 
+FROM users 
+WHERE users.phone = ? AND users.deleted_at IS NULL
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00008s] ('+15555550001',)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT users.id, users.phone, users.email, users.username, users.display_name, users.bio, users.avatar_url, users.last_seen, users.presence_status, users.is_verified, users.hashed_password, users.created_at, users.updated_at, users.deleted_at 
+FROM users 
+WHERE users.username = ? AND users.deleted_at IS NULL
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00005s] ('alice@example.com',)
+WARNING  app.services.email_service:email_service.py:16 
+==================================================
+SMTP_HOST is not configured. Email to alice@example.com skipped.
+MOCK EMAIL DELIVERY:
+To: alice@example.com
+OTP Code: 138610
+==================================================
+--------------------------- Captured stdout teardown ---------------------------
+2026-07-26 21:38:28,531 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("users")
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user_sessions")
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user_settings")
+2026-07-26 21:38:28,532 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("contacts")
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("blocked_users")
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversations")
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversation_members")
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversation_preferences")
+2026-07-26 21:38:28,533 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("messages")
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("message_receipts")
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("message_reactions")
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("attachments")
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("typing_statuses")
+2026-07-26 21:38:28,534 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("notifications")
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("device_tokens")
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("conversation_drafts")
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("starred_messages")
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("messages_deleted_for_me")
+2026-07-26 21:38:28,535 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-07-26 21:38:28,536 INFO sqlalchemy.engine.Engine 
+DROP TABLE messages_deleted_for_me
+2026-07-26 21:38:28,536 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,536 INFO sqlalchemy.engine.Engine 
+DROP TABLE starred_messages
+2026-07-26 21:38:28,536 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,537 INFO sqlalchemy.engine.Engine 
+DROP TABLE notifications
+2026-07-26 21:38:28,537 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,537 INFO sqlalchemy.engine.Engine 
+DROP TABLE attachments
+2026-07-26 21:38:28,537 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,538 INFO sqlalchemy.engine.Engine 
+DROP TABLE message_reactions
+2026-07-26 21:38:28,538 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,538 INFO sqlalchemy.engine.Engine 
+DROP TABLE message_receipts
+2026-07-26 21:38:28,538 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,539 INFO sqlalchemy.engine.Engine 
+DROP TABLE conversation_drafts
+2026-07-26 21:38:28,539 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,539 INFO sqlalchemy.engine.Engine 
+DROP TABLE typing_statuses
+2026-07-26 21:38:28,539 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,540 INFO sqlalchemy.engine.Engine 
+DROP TABLE messages
+2026-07-26 21:38:28,540 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,540 INFO sqlalchemy.engine.Engine 
+DROP TABLE conversation_preferences
+2026-07-26 21:38:28,540 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,541 INFO sqlalchemy.engine.Engine 
+DROP TABLE conversation_members
+2026-07-26 21:38:28,541 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,541 INFO sqlalchemy.engine.Engine 
+DROP TABLE device_tokens
+2026-07-26 21:38:28,541 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,542 INFO sqlalchemy.engine.Engine 
+DROP TABLE conversations
+2026-07-26 21:38:28,542 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,542 INFO sqlalchemy.engine.Engine 
+DROP TABLE blocked_users
+2026-07-26 21:38:28,542 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,543 INFO sqlalchemy.engine.Engine 
+DROP TABLE contacts
+2026-07-26 21:38:28,543 INFO sqlalchemy.engine.Engine [no key 0.00003s] ()
+2026-07-26 21:38:28,543 INFO sqlalchemy.engine.Engine 
+DROP TABLE user_settings
+2026-07-26 21:38:28,543 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,543 INFO sqlalchemy.engine.Engine 
+DROP TABLE user_sessions
+2026-07-26 21:38:28,543 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,544 INFO sqlalchemy.engine.Engine 
+DROP TABLE users
+2026-07-26 21:38:28,544 INFO sqlalchemy.engine.Engine [no key 0.00002s] ()
+2026-07-26 21:38:28,544 INFO sqlalchemy.engine.Engine COMMIT
+---------------------------- Captured log teardown -----------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2715 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("users")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("user_sessions")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("user_settings")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("contacts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("blocked_users")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversations")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversation_members")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversation_preferences")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("messages")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("message_receipts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("message_reactions")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("attachments")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("typing_statuses")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("notifications")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("device_tokens")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("conversation_drafts")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("starred_messages")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("messages_deleted_for_me")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE messages_deleted_for_me
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE starred_messages
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE notifications
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE attachments
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE message_reactions
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE message_receipts
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE conversation_drafts
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE typing_statuses
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE messages
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE conversation_preferences
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE conversation_members
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE device_tokens
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE conversations
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE blocked_users
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE contacts
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00003s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE user_settings
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE user_sessions
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE users
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00002s] ()
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+=========================== short test summary info ============================
+FAILED tests/test_auth.py::test_full_auth_registration_lifecycle - assert 400...
+============================== 1 failed in 0.43s ===============================

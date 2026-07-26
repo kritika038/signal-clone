@@ -49,7 +49,7 @@ class IdentityService:
         }
         logger.info(f"[AuthEvent] {log_payload}")
 
-    async def send_otp(self, phone: str, email: str, ip: Optional[str], device: Optional[str]) -> None:
+    async def send_register_otp(self, phone: str, email: str, ip: Optional[str], device: Optional[str]) -> None:
         from app.services.email_service import email_service
         import random
 
@@ -71,7 +71,7 @@ class IdentityService:
         await email_service.send_otp_email(email, otp)
         self._log_auth_event("REGISTER_OTP_GENERATED", None, None, ip, device, f"Phone: {phone}")
 
-    async def verify_otp_only(self, phone: str, otp: str, ip: Optional[str], device: Optional[str]) -> str:
+    async def verify_register_otp(self, phone: str, otp: str, ip: Optional[str], device: Optional[str]) -> str:
         payload = await self.otp_store.verify(phone, otp)
         if not payload:
             self._log_auth_event("OTP_VERIFICATION_FAILURE", None, None, ip, device, f"Phone: {phone}")
@@ -95,7 +95,9 @@ class IdentityService:
         if username_user:
             raise ValueError("Username already registered")
 
-        hashed_pw = get_password_hash(register_in.password)
+        import secrets
+        random_fallback_pw = secrets.token_urlsafe(32)
+        hashed_pw = get_password_hash(random_fallback_pw)
         new_user = User(
             id=uuid.uuid4(),
             phone=payload["phone"],
@@ -124,6 +126,57 @@ class IdentityService:
         self._log_auth_event("REGISTRATION_SUCCESS", new_user.id, session.id, ip, device)
         return new_user, session, access_token, refresh_token
 
+
+    async def send_login_otp(self, login_id: str, ip: Optional[str], device: Optional[str]) -> None:
+        from app.services.email_service import email_service
+        import random
+
+        user = None
+        if login_id.startswith("+") or login_id.isdigit():
+            user = await self.user_service.get_by_phone(login_id)
+        if not user:
+            # We don't have get_by_email, so we fallback to assuming login_id is email if not phone, but wait!
+            # The prompt says phone or email. We need to look up by email.
+            from sqlalchemy import select
+            stmt = select(User).where(User.email == login_id)
+            result = await self.db.execute(stmt)
+            user = result.scalar_one_or_none()
+            
+        if not user or not user.email:
+            self._log_auth_event("LOGIN_FAIL_NOT_FOUND", None, None, ip, device, f"Identifier: {login_id}")
+            raise ValueError("Account not found or no email associated.")
+
+        otp = f"{random.SystemRandom().randint(0, 999999):06d}"
+        payload = {"user_id": str(user.id), "email": user.email}
+        
+        await self.otp_store.create(login_id, payload, otp, ttl_seconds=300)
+        
+        await email_service.send_otp_email(user.email, otp)
+        self._log_auth_event("LOGIN_OTP_GENERATED", user.id, None, ip, device, f"Identifier: {login_id}")
+
+    async def verify_login_otp(self, login_id: str, otp: str, ip: Optional[str], device_name: Optional[str], device_type: Optional[str]) -> Tuple[User, UserSession, str, str]:
+        """
+        Verifies login OTP and spawns session.
+        """
+        payload = await self.otp_store.verify(login_id, otp)
+        if not payload:
+            self._log_auth_event("LOGIN_OTP_FAILURE", None, None, ip, device_name, f"Identifier: {login_id}")
+            raise ValueError("Invalid or expired OTP code")
+        
+        user_id = uuid.UUID(payload["user_id"])
+        user = await self.user_service.get_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+        
+        await self.otp_store.delete(login_id)
+
+        # Session creation
+        access_token, refresh_token, session = await self._start_session(
+            user.id, device_name, device_type, ip
+        )
+
+        self._log_auth_event("LOGIN_SUCCESS", user.id, session.id, ip, device_name)
+        return user, session, access_token, refresh_token
 
     async def login(self, login_in: UserLogin, ip: Optional[str], device_name: Optional[str], device_type: Optional[str]) -> Tuple[User, UserSession, str, str]:
         """

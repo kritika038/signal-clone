@@ -18,15 +18,19 @@ export interface RegisterPayload {
   phone: string;
   email: string;
   username: string;
-  password: string;
   display_name: string;
   avatar_url?: string;
 }
 
-export interface LoginPayload {
+export interface LoginSendOtpPayload {
   login_id: string;
-  password: string;
 }
+
+export interface LoginVerifyOtpPayload {
+  login_id: string;
+  otp: string;
+}
+
 
 export interface RefreshPayload {
   access_token: string;
@@ -36,14 +40,14 @@ export interface RefreshPayload {
 
 
 export async function sendOtp(payload: SendOtpPayload) {
-  return apiRequest<{ message: string }>("/api/v1/auth/otp/send", {
+  return apiRequest<{ message: string }>("/api/v1/auth/register/send-otp", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export async function verifyOtp(payload: VerifyOtpPayload) {
-  return apiRequest<{ registration_token: string; message: string }>("/api/v1/auth/otp/verify", {
+  return apiRequest<{ registration_token: string; message: string }>("/api/v1/auth/register/verify", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -56,8 +60,15 @@ export async function registerUser(payload: RegisterPayload) {
   });
 }
 
-export async function loginUser(payload: LoginPayload) {
-  return apiRequest<AuthSessionPayload>("/api/v1/auth/login", {
+export async function sendLoginOtp(payload: LoginSendOtpPayload) {
+  return apiRequest<{ message: string }>("/api/v1/auth/login/send-otp", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyLoginOtp(payload: LoginVerifyOtpPayload) {
+  return apiRequest<AuthSessionPayload>("/api/v1/auth/login/verify", {
     method: "POST",
     body: JSON.stringify(payload),
   });
