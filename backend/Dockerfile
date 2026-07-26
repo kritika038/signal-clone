@@ -25,6 +25,7 @@ WORKDIR /app
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
 # Install runtime libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
