@@ -66,8 +66,8 @@ def upgrade() -> None:
     op.create_index(op.f('ix_starred_messages_user_id'), 'starred_messages', ['user_id'], unique=False)
     op.add_column('messages', sa.Column('client_message_id', sa.String(length=100), nullable=True))
     op.add_column('messages', sa.Column('scheduled_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('messages', sa.Column('is_draft', sa.Boolean(), nullable=False, server_default=sa.text('0')))
-    op.add_column('messages', sa.Column('is_pinned', sa.Boolean(), nullable=False, server_default=sa.text('0')))
+    op.add_column('messages', sa.Column('is_draft', sa.Boolean(), nullable=False, server_default=sa.text('false')))
+    op.add_column('messages', sa.Column('is_pinned', sa.Boolean(), nullable=False, server_default=sa.text('false')))
     op.create_index(op.f('ix_messages_client_message_id'), 'messages', ['client_message_id'], unique=False)
     op.create_index(op.f('ix_messages_scheduled_at'), 'messages', ['scheduled_at'], unique=False)
     # ### end Alembic commands ###
