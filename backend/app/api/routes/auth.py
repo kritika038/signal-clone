@@ -70,6 +70,58 @@ def format_user_data(user: User) -> dict:
         "settings": settings_data
     }
 
+from app.schemas.auth import (
+    UserRegister,
+    OTPVerify,
+    OTPSend,
+    UserLogin,
+    TokenRefreshRequest,
+    TokenResponse,
+    ProfileUpdate
+)
+
+
+@router.post("/otp/send", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_register)])
+async def send_otp(
+    send_in: OTPSend,
+    request: Request,
+    service: IdentityService = Depends(get_identity_service)
+):
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    try:
+        await service.send_otp(send_in.phone, send_in.email, ip, user_agent)
+        return {
+            "success": True,
+            "data": {
+                "message": "OTP code sent to your email successfully."
+            }
+        }
+    except ValueError as e:
+        raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_SEND_FAILED", str(e))
+
+@router.post("/otp/verify", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_verify_otp)])
+async def verify_otp(
+    verify_in: OTPVerify,
+    request: Request,
+    service: IdentityService = Depends(get_identity_service)
+):
+    ip = get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "unknown")
+    try:
+        registration_token = await service.verify_otp_only(
+            verify_in.phone, verify_in.otp, ip, user_agent
+        )
+        return {
+            "success": True,
+            "data": {
+                "registration_token": registration_token,
+                "message": "OTP verified successfully. Proceed to profile setup."
+            }
+        }
+    except ValueError as e:
+        raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_VERIFICATION_FAILED", str(e))
+
 @router.post("/register", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_register)])
 async def register(
     register_in: UserRegister,
@@ -79,29 +131,7 @@ async def register(
     ip = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
     try:
-        otp = await service.register(register_in, ip, user_agent)
-        return {
-            "success": True,
-            "data": {
-                "message": "OTP code sent successfully.",
-                "otp_mock": otp  # Exposed for testing/development lifecycle
-            }
-        }
-    except ValueError as e:
-        raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED", str(e))
-
-@router.post("/verify-otp", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_verify_otp)])
-async def verify_otp(
-    verify_in: OTPVerify,
-    request: Request,
-    service: IdentityService = Depends(get_identity_service)
-):
-    ip = get_client_ip(request)
-    user_agent = request.headers.get("user-agent", "unknown")
-    try:
-        user, session, access_token, refresh_token = await service.verify_otp(
-            verify_in.phone, verify_in.otp, ip, user_agent, "DESKTOP"
-        )
+        user, session, access_token, refresh_token = await service.register(register_in, ip, user_agent)
         return {
             "success": True,
             "data": {
@@ -115,7 +145,8 @@ async def verify_otp(
             }
         }
     except ValueError as e:
-        raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_VERIFICATION_FAILED", str(e))
+        raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED", str(e))
+
 
 @router.post("/login", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_login)])
 async def login(

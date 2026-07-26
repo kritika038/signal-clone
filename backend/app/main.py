@@ -75,8 +75,8 @@ def create_app() -> socketio.ASGIApp:
     
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_origin_regex=r"https://.*\.vercel\.app" if not cors_origins and settings.is_production else None,
+        allow_origins=cors_origins if cors_origins else ["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origin_regex=r"^https://signal-clone(?:-[a-zA-Z0-9-]+)?\.vercel\.app$" if not cors_origins else None,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
