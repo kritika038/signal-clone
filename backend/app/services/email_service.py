@@ -23,7 +23,8 @@ class EmailService:
 
         if not settings.SMTP_HOST:
             # 4. If email delivery fails, return a proper API error instead of pretending success.
-            raise ValueError("SMTP credentials are not configured on the server. Email delivery failed.")
+            # Use user-friendly message to avoid exposing internal configurations
+            raise ValueError("Unable to send verification email. Please try again later.")
 
         message = EmailMessage()
         message["From"] = settings.SMTP_FROM_EMAIL
