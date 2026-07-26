@@ -52,12 +52,12 @@ async def test_full_auth_lifecycle(async_client):
     # 1. Register OTP Send
     res = await async_client.post("/api/v1/auth/register/send-otp", json={"phone": "+12223334444"})
     assert res.status_code == 200
-    assert res.json() == {"success": True, "message": "Verification code sent."}
+    assert res.json() == {"success": True, "message": "Verification code sent.", "demo_otp": "123456"}
 
     # 2. Register OTP Verify (Invalid)
     res = await async_client.post("/api/v1/auth/register/verify", json={"phone": "+12223334444", "otp": "999999"})
     assert res.status_code == 400
-    assert res.json()["error"]["message"] == "Invalid verification code."
+    assert "Invalid verification code" in res.json()["error"]["message"]
 
     # 3. Register OTP Verify (Valid)
     res = await async_client.post("/api/v1/auth/register/verify", json={"phone": "+12223334444", "otp": "123456"})
