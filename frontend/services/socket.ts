@@ -2,9 +2,7 @@ import { io, type Socket } from "socket.io-client";
 
 class SocketService {
   private socket: Socket | null = null;
-  private url =
-    process.env.NEXT_PUBLIC_WS_URL ||
-    (process.env.NODE_ENV === "production" ? "" : "http://localhost:8000");
+  private url = process.env.NEXT_PUBLIC_WS_URL || "";
 
   connect(token?: string) {
     if (this.socket) {
