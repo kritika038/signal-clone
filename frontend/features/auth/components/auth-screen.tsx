@@ -243,12 +243,21 @@ export function AuthScreen() {
           const result = await response.json();
           if (result.success && result.data.url) {
             finalAvatarUrl = result.data.url;
+          } else {
+            console.error("Avatar upload failed:", result.error?.message || "Unknown error");
+            finalAvatarUrl = BUILT_IN_AVATARS[0]; // Fallback to default
           }
         } catch (error) {
           console.error("Avatar upload failed:", error);
+          finalAvatarUrl = BUILT_IN_AVATARS[0]; // Fallback to default
         } finally {
           setIsUploading(false);
         }
+      }
+
+      if (finalAvatarUrl.startsWith("data:")) {
+        // Prevent sending Base64 strings to the backend which cause 413 Payload Too Large
+        finalAvatarUrl = BUILT_IN_AVATARS[0];
       }
 
       registerMutation.mutate({ 

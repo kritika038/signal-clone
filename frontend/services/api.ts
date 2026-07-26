@@ -18,14 +18,20 @@ export async function apiRequest<T>(
   path: string,
   { token, headers, retrying = false, ...init }: RequestOptions = {}
 ): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+    });
+  } catch (error) {
+    // This catches network errors and CORS errors (e.g. TypeError: Failed to fetch)
+    throw new ApiError("Network error. The backend may be unreachable or blocked by CORS.", 0);
+  }
 
   const payload = (await response.json().catch(() => null)) as
     | { success?: boolean; data?: T; error?: { message?: string } }
