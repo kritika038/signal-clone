@@ -76,11 +76,16 @@ def create_app() -> socketio.ASGIApp:
     # Add SecurityHeadersMiddleware FIRST so it runs AFTER CORSMiddleware
     app.add_middleware(SecurityHeadersMiddleware)
 
+    # Support both localhost and loaded CORS origins unconditionally
+    allow_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    if cors_origins:
+        allow_origins.extend(cors_origins)
+        
     # Add CORSMiddleware LAST so it runs FIRST (outermost layer)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins if cors_origins else ["http://localhost:3000", "http://127.0.0.1:3000"],
-        allow_origin_regex=r"^https://signal-clone(?:-[a-zA-Z0-9-]+)?\.vercel\.app$",
+        allow_origins=allow_origins,
+        allow_origin_regex=r"^https://.*\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
