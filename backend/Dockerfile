@@ -43,5 +43,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Exec entrypoint mapping to uvicorn ASGI server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Exec entrypoint mapping to uvicorn ASGI server with pre-flight migrations
+CMD ["sh", "-c", "set -e; alembic upgrade head; exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
