@@ -12,8 +12,7 @@ from app.api.deps import (
     rate_limit_login,
     rate_limit_verify_otp,
     rate_limit_refresh,
-    get_client_ip,
-    global_otp_store
+    get_client_ip
 )
 from app.core.exceptions import APIException
 from app.implementations.db_session_manager import DBSessionManager
@@ -32,11 +31,14 @@ from app.services.user_service import UserService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+from app.implementations.db_otp_store import DatabaseOTPStore
+
 def get_identity_service(
     db: AsyncSession = Depends(get_async_db),
     session_manager: DBSessionManager = Depends(get_session_manager)
 ) -> IdentityService:
-    return IdentityService(db, global_otp_store, session_manager)
+    otp_store = DatabaseOTPStore(db)
+    return IdentityService(db, otp_store, session_manager)
 
 # Helper to format User model representation safely
 def format_user_data(user: User) -> dict:
@@ -146,6 +148,20 @@ async def register(
         }
     except ValueError as e:
         raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED", str(e))
+
+@router.get("/check-username", status_code=status.HTTP_200_OK)
+async def check_username(
+    username: str,
+    db: AsyncSession = Depends(get_async_db)
+):
+    user_service = UserService(db)
+    existing_user = await user_service.get_by_username(username)
+    return {
+        "success": True,
+        "data": {
+            "available": existing_user is None
+        }
+    }
 
 
 @router.post("/login", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_login)])

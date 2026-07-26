@@ -10,6 +10,7 @@ from app.models.blocked_user import BlockedUser  # noqa
 from app.models.conversation import Conversation  # noqa
 from app.models.conversation_member import ConversationMember  # noqa
 from app.models.conversation_preference import ConversationPreference  # noqa
+from app.models.otp import OTPRequest  # noqa
 from app.models.message import Message  # noqa
 from app.models.message_receipt import MessageReceipt  # noqa
 from app.models.message_reaction import MessageReaction  # noqa

@@ -12,7 +12,6 @@ from app.core.config import settings
 from app.core.exceptions import APIException
 from app.db.session import get_async_db
 from app.implementations.db_session_manager import DBSessionManager
-from app.implementations.in_memory_otp_store import InMemoryOTPStore
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.services.runtime import runtime_services
@@ -21,7 +20,6 @@ from app.services.user_service import UserService
 token_header = APIKeyHeader(name="Authorization", auto_error=False)
 
 global_rate_limiter = runtime_services.rate_limiter
-global_otp_store = InMemoryOTPStore()
 
 
 async def get_session_manager(db: AsyncSession = Depends(get_async_db)) -> DBSessionManager:

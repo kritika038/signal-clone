@@ -85,6 +85,10 @@ export async function fetchSession(token: string) {
   return apiRequest<DeviceSession>("/api/v1/auth/session", { token });
 }
 
+export async function checkUsername(username: string) {
+  return apiRequest<{ available: boolean }>(`/api/v1/auth/check-username?username=${encodeURIComponent(username)}`);
+}
+
 export async function updateProfile(
   token: string,
   payload: {

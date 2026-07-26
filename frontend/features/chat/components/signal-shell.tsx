@@ -11,6 +11,7 @@ import {
   MoonStar,
   Search,
   Settings,
+  Smile,
   UsersRound,
   Video,
 } from "lucide-react";
@@ -602,6 +603,9 @@ export function SignalShell() {
                         }
                       }}
                     />
+                    <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 text-neutral-400 hover:text-neutral-100" onClick={() => setFeatureNotice("Emoji picker is coming soon.")}>
+                      <Smile className="h-5 w-5" />
+                    </Button>
                   </div>
                   <Button
                     size="icon"
