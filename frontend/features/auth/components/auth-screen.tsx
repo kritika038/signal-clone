@@ -187,7 +187,7 @@ export function AuthScreen() {
     mutationFn: verifyLoginOtp,
     onSuccess: (payload) => {
       setSession(payload);
-      router.push("/conversations");
+      router.push("/");
     },
     onError: (error: any) => setOtpError(error.message || "Invalid or expired OTP"),
   });
@@ -217,7 +217,7 @@ export function AuthScreen() {
     mutationFn: registerUser,
     onSuccess: (payload) => {
       setSession(payload);
-      router.push("/conversations");
+      router.push("/");
     },
   });
 

@@ -34,7 +34,7 @@ export async function apiRequest<T>(
   }
 
   const payload = (await response.json().catch(() => null)) as
-    | { success?: boolean; data?: T; error?: { message?: string } }
+    | { success?: boolean; data?: T; error?: { message?: string }; detail?: any; message?: string }
     | null;
 
   if (response.status === 401 && token && !retrying && typeof window !== "undefined") {
@@ -68,10 +68,22 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok || payload?.success === false) {
-    throw new ApiError(
-      payload?.error?.message || "Something went wrong while contacting the server.",
-      response.status
-    );
+    let errorMessage = "Something went wrong while contacting the server.";
+    
+    if (payload?.error?.message) {
+      errorMessage = payload.error.message;
+    } else if (payload?.detail) {
+      // Handle FastAPI validation errors (422)
+      if (Array.isArray(payload.detail) && payload.detail.length > 0) {
+        errorMessage = payload.detail.map((err: any) => err.msg).join(", ");
+      } else if (typeof payload.detail === "string") {
+        errorMessage = payload.detail;
+      }
+    } else if (payload?.message) {
+      errorMessage = payload.message;
+    }
+
+    throw new ApiError(errorMessage, response.status);
   }
 
   return (payload?.data ?? payload) as T;

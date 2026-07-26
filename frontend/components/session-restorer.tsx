@@ -29,8 +29,8 @@ export function SessionRestorer({ children }: { children: React.ReactNode }) {
         if (isMounted) {
           updateUser(user);
           setIsInitializing(false);
-          if (pathname === "/login" || pathname === "/") {
-            router.push("/conversations");
+          if (pathname === "/login") {
+            router.push("/");
           }
         }
       } catch (error) {
