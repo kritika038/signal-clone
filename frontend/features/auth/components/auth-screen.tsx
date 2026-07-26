@@ -107,15 +107,18 @@ const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.A
 const DemoNotice = () => {
   if (!isDemoMode) return null;
   return (
-    <div className="mt-6 p-4 rounded-xl bg-blue-900/20 border border-blue-800/30 text-left">
-      <div className="flex items-center gap-2 text-blue-400 font-medium mb-1">
+    <div className="mt-6 p-4 rounded-xl bg-blue-900/20 border border-blue-800/30 text-left relative overflow-hidden group">
+      <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="relative flex items-center gap-2 text-blue-400 font-semibold mb-1.5">
         <Info className="h-4 w-4" />
-        <h4>Demo Build</h4>
+        <h4 className="tracking-tight">Demo Build</h4>
       </div>
-      <p className="text-sm text-blue-200/70 mb-3">Phone verification is simulated for evaluation purposes.</p>
-      <div className="bg-blue-950/50 rounded-lg py-2 px-3 flex justify-between items-center border border-blue-900/50">
-        <span className="text-xs text-blue-300">Verification Code</span>
-        <span className="font-mono text-blue-400 font-bold tracking-widest">123456</span>
+      <p className="relative text-[13px] leading-relaxed text-blue-200/80 mb-3">
+        Phone verification is mocked for this assignment.
+      </p>
+      <div className="relative bg-blue-950/50 rounded-lg py-2.5 px-3.5 flex justify-between items-center border border-blue-900/50 shadow-inner">
+        <span className="text-xs font-medium text-blue-300">Demo OTP</span>
+        <span className="font-mono text-blue-400 font-bold tracking-[0.2em]">123456</span>
       </div>
     </div>
   );
@@ -182,7 +185,10 @@ export function AuthScreen() {
 
   const verifyLoginOtpMutation = useMutation({
     mutationFn: verifyLoginOtp,
-    onSuccess: (payload) => setSession(payload),
+    onSuccess: (payload) => {
+      setSession(payload);
+      router.push("/conversations");
+    },
     onError: (error: any) => setOtpError(error.message || "Invalid or expired OTP"),
   });
 
@@ -257,6 +263,7 @@ export function AuthScreen() {
 
   const handleLoginNext = () => {
     if (loginStep === "identifier" && loginId) {
+      setResendCountdown(30);
       sendLoginOtpMutation.mutate({ login_id: loginId });
     }
   };
@@ -306,7 +313,7 @@ export function AuthScreen() {
     if (registerStep === "otp") {
       return (
         <motion.div key="otp" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Enter the 6-digit code sent to {registerData.phone}</p>
+          <p className="text-sm text-neutral-400 text-center">Enter the 6-digit verification code.</p>
           <OTPInputBoxes value={otp} onChange={(val) => { setOtp(val); setOtpError(""); }} onComplete={onRegisterOtpComplete} error={otpError} />
           <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={onRegisterOtpComplete} disabled={otp.length !== 6 || verifyOtpMutation.isPending}>
             {verifyOtpMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -315,7 +322,9 @@ export function AuthScreen() {
           <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2 transition-colors" onClick={() => { setResendCountdown(30); sendOtpMutation.mutate({ phone: registerData.phone }); }} disabled={resendCountdown > 0 || sendOtpMutation.isPending}>
             {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Code"}
           </Button>
-          <DemoNotice />
+          <div className="bg-blue-900/20 border border-blue-900/30 rounded-lg p-3 text-center">
+            <span className="text-blue-300 font-mono text-sm">Demo OTP: 123456</span>
+          </div>
           {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
         </motion.div>
       );
@@ -458,15 +467,22 @@ export function AuthScreen() {
   const renderLoginStep = () => {
     if (loginStep === "identifier") {
       return (
-        <motion.div key="identifier" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Enter your phone number to receive a login code.</p>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg focus-visible:ring-blue-500" placeholder="+1234567890" value={loginId} onChange={(e) => setLoginId(e.target.value)} autoFocus onKeyDown={(e) => e.key === "Enter" && loginId && handleLoginNext()} />
+        <motion.div key="login-identifier" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+          <p className="text-sm text-neutral-400 text-center">Enter your phone number or username to log in.</p>
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500 group-focus-within:text-blue-500 transition-colors" />
+            <Input 
+              className="bg-neutral-900 border-neutral-800 h-14 pl-11 text-base focus-visible:ring-blue-500 transition-all rounded-xl shadow-sm" 
+              placeholder="Phone or Username" 
+              value={loginId} 
+              onChange={(e) => setLoginId(e.target.value)} 
+              onKeyDown={(e) => e.key === "Enter" && loginId && handleLoginNext()}
+              autoFocus 
+            />
           </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={handleLoginNext} disabled={!loginId || sendLoginOtpMutation.isPending}>
-            {sendLoginOtpMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {sendLoginOtpMutation.isPending ? "Sending code..." : "Next"} {!sendLoginOtpMutation.isPending && <ArrowRight className="ml-2 h-4 w-4" />}
+          <Button className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg mt-4 transition-all rounded-xl shadow-lg shadow-blue-900/20 disabled:opacity-50" onClick={handleLoginNext} disabled={!loginId || sendLoginOtpMutation.isPending}>
+            {sendLoginOtpMutation.isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+            {sendLoginOtpMutation.isPending ? "Continuing..." : "Continue"} {!sendLoginOtpMutation.isPending && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
           {sendLoginOtpMutation.error ? <p className="text-sm text-red-400 text-center">{sendLoginOtpMutation.error.message}</p> : null}
         </motion.div>
@@ -474,17 +490,19 @@ export function AuthScreen() {
     }
     if (loginStep === "otp") {
       return (
-        <motion.div key="otp" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Enter the 6-digit code sent to you</p>
+        <motion.div key="login-otp" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
+          <p className="text-sm text-neutral-400 text-center">Enter the 6-digit verification code.</p>
           <OTPInputBoxes value={otp} onChange={(val) => { setOtp(val); setOtpError(""); }} onComplete={onLoginOtpComplete} error={otpError} />
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={onLoginOtpComplete} disabled={otp.length !== 6 || verifyLoginOtpMutation.isPending}>
-            {verifyLoginOtpMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {verifyLoginOtpMutation.isPending ? "Verifying..." : "Sign in"}
+          <Button className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg mt-4 transition-all rounded-xl shadow-lg shadow-blue-900/20 disabled:opacity-50" onClick={onLoginOtpComplete} disabled={otp.length !== 6 || verifyLoginOtpMutation.isPending}>
+            {verifyLoginOtpMutation.isPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+            {verifyLoginOtpMutation.isPending ? "Verifying..." : "Verify Code"}
           </Button>
-          <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2 transition-colors" onClick={() => { setResendCountdown(30); sendLoginOtpMutation.mutate({ login_id: loginId }); }} disabled={resendCountdown > 0 || sendLoginOtpMutation.isPending}>
+          <Button variant="ghost" className="w-full h-12 text-neutral-400 hover:text-white mt-2 transition-colors rounded-xl" onClick={() => { setResendCountdown(30); sendLoginOtpMutation.mutate({ login_id: loginId }); }} disabled={resendCountdown > 0 || sendLoginOtpMutation.isPending}>
             {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Code"}
           </Button>
-          <DemoNotice />
+          <div className="bg-blue-900/20 border border-blue-900/30 rounded-lg p-3 text-center">
+            <span className="text-blue-300 font-mono text-sm">Demo OTP: 123456</span>
+          </div>
           {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
         </motion.div>
       );
@@ -499,11 +517,29 @@ export function AuthScreen() {
       <div className="w-full max-w-md rounded-3xl border border-neutral-800 bg-neutral-900/50 p-8 shadow-2xl backdrop-blur-xl relative z-10">
         
         {mode !== "welcome" && (
-          <button className="absolute left-6 top-8 text-neutral-400 hover:text-white transition-colors" onClick={() => {
+          <button className="absolute left-4 top-4 p-2 text-neutral-400 hover:text-white transition-colors" onClick={() => {
             if (mode === "register" && registerStep !== "phone") {
-              setRegisterStep(REGISTER_STEPS[REGISTER_STEPS.indexOf(registerStep) - 1]);
+              const prevIndex = REGISTER_STEPS.indexOf(registerStep) - 1;
+              if (prevIndex >= 0) {
+                if (REGISTER_STEPS[prevIndex] === "phone") {
+                  sendOtpMutation.reset();
+                  verifyOtpMutation.reset();
+                  setOtpError("");
+                  setOtp("");
+                }
+                setRegisterStep(REGISTER_STEPS[prevIndex]);
+              }
             } else if (mode === "login" && loginStep !== "identifier") {
-              setLoginStep(LOGIN_STEPS[LOGIN_STEPS.indexOf(loginStep) - 1]);
+              const prevIndex = LOGIN_STEPS.indexOf(loginStep) - 1;
+              if (prevIndex >= 0) {
+                if (LOGIN_STEPS[prevIndex] === "identifier") {
+                  sendLoginOtpMutation.reset();
+                  verifyLoginOtpMutation.reset();
+                  setOtpError("");
+                  setOtp("");
+                }
+                setLoginStep(LOGIN_STEPS[prevIndex]);
+              }
             } else {
               setMode("welcome");
               setRegisterStep("phone");

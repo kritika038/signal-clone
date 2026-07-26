@@ -16,6 +16,7 @@ import {
   Video,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import { formatMessageTime, formatPresenceText, formatSidebarTime } from "@/util
 import { SettingsPanel } from "@/features/chat/components/settings-panel";
 
 export function SignalShell() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { accessToken, user, updateUser, clearSession } = useSessionStore();
   const {
@@ -250,6 +252,20 @@ export function SignalShell() {
     },
   });
 
+  const handleLogout = async () => {
+    if (accessToken) {
+      try {
+        await logoutUser(accessToken);
+      } catch (e) {
+        console.error("Logout error", e);
+      }
+    }
+    socketService.disconnect();
+    clearSession();
+    queryClient.clear();
+    router.push("/login");
+  };
+
   const createGroupMutation = useMutation({
     mutationFn: () => createGroup(accessToken!, { name: groupName, description: null, member_ids: [] }),
     onSuccess: async () => {
@@ -349,6 +365,9 @@ export function SignalShell() {
             </ToolbarIcon>
             <ToolbarIcon label="New Chat" onClick={() => setShowNewGroup(true)}>
               <MessageSquarePlus className="h-4 w-4" />
+            </ToolbarIcon>
+            <ToolbarIcon label="Log Out" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
             </ToolbarIcon>
           </div>
         </div>

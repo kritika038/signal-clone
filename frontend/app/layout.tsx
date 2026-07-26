@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import "../styles/globals.css";
 import Providers from "./providers";
+import { SessionRestorer } from "@/components/session-restorer";
 
 export const metadata: Metadata = {
   title: "Signal Clone",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <SessionRestorer>{children}</SessionRestorer>
+        </Providers>
       </body>
     </html>
   );
