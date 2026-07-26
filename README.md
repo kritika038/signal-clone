@@ -1,154 +1,148 @@
-# Signal Clone
+# Signal Clone (SDE Fullstack Assignment)
 
-Production-oriented Signal-style messaging platform built with FastAPI, Socket.IO, SQLAlchemy 2, Next.js, and Flutter with Firebase Cloud Messaging (FCM).
+A fully functional clone of the Signal messaging application focusing on core messaging workflows, real-time synchronization, and a premium Signal Desktop-inspired user interface.
 
-## Architecture
+## 🚀 Features
 
-- **Backend**: FastAPI with clean architecture split across `api`, `services`, `repositories`, `models`, and `websocket`.
-- **Database**: PostgreSQL (staging/production) or SQLite (development/testing).
-- **Caching & Rate Limiting**: Redis-backed infrastructure with fallback to in-memory mode.
-- **Storage**: Abstracted behind `StorageProvider` with local, MinIO, S3, and Cloudflare R2 support.
-- **Background Jobs**: Scheduler abstraction supporting `AsyncScheduler`, Celery, and Dramatiq.
-- **Push Notifications**: Firebase Cloud Messaging (FCM) integrated via `NotificationService` and `FirebaseNotificationProvider` with device token management and fallback to `MockNotificationProvider`.
-- **Frontend (Web)**: Next.js with TypeScript, TailwindCSS, Zustand, TanStack Query, Socket.IO client, and Firebase Web Push SDK.
-- **Mobile (Flutter)**: Flutter client supporting `firebase_core`, `firebase_messaging`, local notifications, token refresh, and background/killed state deep-linking.
+### Core Messaging
+- **Real-time Synchronization**: Powered by Socket.IO, messages appear instantly across clients.
+- **Optimistic UI**: Messages render immediately in the UI before network confirmation.
+- **Read & Delivery Receipts**: Track message status in real-time (✓✓).
+- **Typing Indicators**: See when the other person is typing...
+- **Direct & Group Conversations**: Chat 1-on-1 or create group chats.
+- **Message Editing & Deletion**: Edit sent messages or delete them for everyone.
 
----
-
-## Firebase Cloud Messaging (FCM) Integration
-
-Firebase is used **exclusively for Push Notifications**. Authentication remains managed by the FastAPI backend JWT system, and data storage remains in PostgreSQL.
-
-### Firebase Setup & Service Account
-
-1. Go to the [Firebase Console](https://console.firebase.google.com/).
-2. Create a new Firebase project (e.g., `signal-clone-app`).
-3. Under **Project Settings** > **Service Accounts**, click **Generate new private key** to download the JSON credentials file.
-4. Set `FIREBASE_CREDENTIALS_PATH=/path/to/service-account.json` or `FIREBASE_CREDENTIALS_JSON='{...}'` in your environment.
-5. Set `NOTIFICATION_BACKEND=firebase` to enable live FCM notifications. When omitted or `NOTIFICATION_BACKEND=mock`, the system operates in mock/test mode.
-
-### Web Configuration (Next.js)
-
-1. In Firebase Console, add a Web App under Project Settings.
-2. Under **Web Push Certificates** (VAPID key), generate a key pair.
-3. Configure frontend environment variables in `frontend/.env.local`:
-   ```env
-   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=signal-clone
-   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_vapid_key
-   ```
-4. The service worker at `frontend/public/firebase-messaging-sw.js` handles background notifications and chat deep-linking. Its public Firebase configuration is served dynamically by `frontend/app/firebase-config.js/route.ts`; do not put service-account credentials in frontend environment variables.
-5. In Signal Web, open **Settings → Notifications** and choose **Enable browser notifications**. The browser prompt is intentionally only shown after that user action.
-
-### Android Configuration (Flutter)
-
-1. Add your Android App package name (e.g. `com.signal.clone`) in Firebase Console.
-2. Download `google-services.json` and place it in `mobile/android/app/google-services.json`.
-3. Build the APK: `cd mobile && flutter build apk`.
-4. Run against the existing backend with `flutter run --dart-define=SIGNAL_API_URL=https://api.example.com`. The authenticated application shell must pass its FastAPI JWT to `FCMService.initialize`; Firebase Authentication is not used.
-
-### iOS Configuration (Flutter)
-
-1. Add your iOS App Bundle ID in Firebase Console.
-2. Download `GoogleService-Info.plist` and place it in `mobile/ios/Runner/GoogleService-Info.plist`.
-3. Upload your APNs Authentication Key (.p8) in Firebase Console under **Project Settings** > **Cloud Messaging**.
+### Premium Experience
+- **Pixel-perfect Design**: A desktop UI meticulously modelled after Signal Desktop and Telegram.
+- **Responsive Layout**: Seamlessly adapts from wide desktop monitors to mobile viewports.
+- **Dark Mode**: First-class dark mode support, defaulting to system preference.
+- **Micro-animations**: Smooth Framer Motion transitions for toasts, modals, and list states.
+- **Rich Media**: Supports image and video file attachments.
 
 ---
 
-## Environment Variables
+## 🏗 Architecture Diagram
 
-### Backend Environment Variables
+```mermaid
+graph TD
+    subgraph Frontend [Next.js Client]
+        UI[React UI Components]
+        Zustand[Zustand Store]
+        Query[TanStack Query]
+        SocketClient[Socket.IO Client]
+        
+        UI <--> Zustand
+        UI <--> Query
+        Query <--> Fetch(HTTP API)
+        UI <--> SocketClient
+    end
 
-- `ENVIRONMENT`: `development`, `testing`, `staging`, `production`
-- `DATABASE_BACKEND`: `sqlite`, `postgresql`
-- `DATABASE_URL`: optional explicit database connection string
-- `REDIS_BACKEND`: `memory`, `redis`
-- `REDIS_URL`: Redis connection string (e.g. `redis://localhost:6379/0`)
-- `NOTIFICATION_BACKEND`: `mock`, `firebase`, `apns`
-- `FIREBASE_PROJECT_ID`: Firebase project ID
-- `FIREBASE_CREDENTIALS_PATH`: File path to service account JSON key
-- `FIREBASE_CREDENTIALS_JSON`: Raw JSON contents of service account key
-- `NEXT_PUBLIC_FIREBASE_*`: web app's public Firebase configuration (set in `frontend/.env.local`, never use service-account values)
-- `NEXT_PUBLIC_FIREBASE_VAPID_KEY`: web-push VAPID key
-- `SIGNAL_API_URL`: Flutter build-time backend base URL
+    subgraph Backend [FastAPI Server]
+        API[FastAPI Endpoints]
+        SocketServer[Socket.IO Gateway]
+        Auth[JWT Authentication]
+        SQL[SQLAlchemy ORM]
+        
+        API <--> Auth
+        API <--> SQL
+        SocketServer <--> SQL
+    end
 
----
+    subgraph Database [PostgreSQL / SQLite]
+        DB[(Relational DB)]
+    end
 
-## Device Registration APIs
-
-- **`POST /api/v1/devices/register`**: Registers or updates an FCM device token.
-  ```json
-  {
-    "device_id": "unique-device-identifier",
-    "platform": "ios | android | web",
-    "fcm_token": "fcm_token_string"
-  }
-  ```
-- **`GET /api/v1/devices`**: Returns a list of active device tokens for the authenticated user.
-- **`DELETE /api/v1/devices/{device_id}`**: Deletes the specified device token for the current user.
-
----
-
-## Database and Migrations
-
-Run database migrations:
-
-```bash
-cd backend
-alembic upgrade head
+    Fetch -->|REST API| API
+    SocketClient <-->|WebSockets| SocketServer
+    SQL <--> DB
 ```
 
 ---
 
-## Docker
+## 🗄 Database Schema Diagram
 
-Run local stack:
+```mermaid
+erDiagram
+    USERS ||--o{ USER_SESSIONS : creates
+    USERS ||--o{ CONTACTS : manages
+    USERS ||--o{ CONVERSATION_MEMBERS : joins
+    USERS ||--o{ MESSAGES : sends
+    
+    CONVERSATIONS ||--o{ CONVERSATION_MEMBERS : contains
+    CONVERSATIONS ||--o{ MESSAGES : stores
+    
+    MESSAGES ||--o{ MESSAGE_RECEIPTS : tracks
+    MESSAGES ||--o{ MESSAGE_REACTIONS : has
+    MESSAGES ||--o{ MESSAGE_ATTACHMENTS : contains
 
-```bash
-docker compose up --build
-```
+    USERS {
+        uuid id PK
+        string phone UK
+        string username UK
+        string display_name
+        string avatar_url
+    }
 
-Run production stack:
+    CONVERSATIONS {
+        uuid id PK
+        string type
+        string name
+        datetime last_activity_at
+    }
 
-```bash
-docker compose -f docker-compose.prod.yml up --build
+    MESSAGES {
+        uuid id PK
+        uuid conversation_id FK
+        uuid sender_id FK
+        text content
+        datetime created_at
+    }
 ```
 
 ---
 
-## Verification and Testing
+## 📚 API Documentation
+The API is built with FastAPI, which automatically generates OpenAPI interactive documentation.
+Once deployed or running locally, visit:
+- **Swagger UI**: `/docs`
+- **ReDoc**: `/redoc`
 
-### Backend Verification
-
-```bash
-cd backend
-PYTHONPATH=. .venv/bin/pytest tests
-python3 -m compileall app
-```
-
-### Frontend Verification
-
-```bash
-cd frontend
-npm install
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
+**Key Endpoints**:
+- `POST /api/v1/auth/register`: Mocked registration wizard endpoint.
+- `GET /api/v1/conversations`: Retrieve active conversations.
+- `POST /api/v1/conversations/{id}/messages`: Send a message.
+- `POST /api/v1/media/upload`: Upload attachments.
 
 ---
 
-## Manual Testing Steps
+## 🚀 Deployment Instructions
 
-1. **Register Device Token**: Send a `POST /api/v1/devices/register` request with JWT header to register a device.
-2. **List Registered Devices**: Verify devices via `GET /api/v1/devices`.
-3. **Web Permission**: In the web app, enable notifications from Settings and verify the device registration appears in `GET /api/v1/devices`.
-4. **Send Message**: Send a direct message, group message, mention, reply, or group invite and verify FCM delivery. Sender is automatically excluded.
-5. **Invalid Token Cleanup**: If FCM returns `UnregisteredError`, invalid tokens are automatically purged from PostgreSQL.
-6. **Deep Link**: Tap a background/terminated mobile notification or a web notification and verify it opens the supplied conversation.
-7. **Delete Device**: Call `DELETE /api/v1/devices/{device_id}` and verify device removal.
+### Prerequisites
+- Node.js 20+
+- Python 3.12+
+
+### Backend Setup (Render)
+1. Fork or clone this repository to your Render-connected GitHub account.
+2. In the Render Dashboard, create a new **Web Service**.
+3. Choose the `backend` directory as the Root Directory.
+4. Set the Build Command to `pip install -r requirements.txt`.
+5. Set the Start Command to `uvicorn app.main:app --host 0.0.0.0 --port 10000`.
+6. Add an Environment Variable: `DATABASE_BACKEND = postgresql`.
+7. Link a Render PostgreSQL instance to the service.
+
+### Frontend Setup (Vercel)
+1. In the Vercel Dashboard, import your repository.
+2. Set the Root Directory to `frontend`.
+3. Framework Preset: Next.js.
+4. Add the following Environment Variables:
+   - `NEXT_PUBLIC_API_URL`: Your Render backend URL (e.g., `https://signal-clone-backend.onrender.com`)
+   - `NEXT_PUBLIC_WS_URL`: Your Render backend URL.
+5. Deploy!
+
+---
+
+## ⚠️ Known Limitations
+- **Mocked Authentication**: As per assignment instructions, real SMS verification (Twilio) and end-to-end encryption protocols are intentionally omitted. A 6-digit mocked OTP (`123456`) is used.
+- **Ephemeral Storage**: Media uploads are currently saved to the local filesystem. On ephemeral hosts like Render, these files will be lost upon restart. Production deployments should attach an AWS S3 bucket.
+- **Voice/Video Calls**: Placeholder UI exists, but WebRTC signaling is not yet implemented.
+- **Stories/Linked Devices**: Feature flagged as "Coming Soon" placeholders to match the product brief.
