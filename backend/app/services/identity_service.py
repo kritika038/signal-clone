@@ -73,6 +73,10 @@ class IdentityService:
         phone = register_in.registration_token.replace("mock-token-", "")
 
         # Create user
+        phone_user = await self.user_service.get_by_phone(phone)
+        if phone_user:
+            raise ValueError("Phone number already registered")
+
         username_user = await self.user_service.get_by_username(register_in.username)
         if username_user:
             raise ValueError("Username already registered")
