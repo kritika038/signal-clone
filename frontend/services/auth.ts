@@ -4,19 +4,16 @@ import { apiRequest } from "@/services/api";
 
 export interface SendOtpPayload {
   phone: string;
-  email: string;
 }
 
 export interface VerifyOtpPayload {
   phone: string;
-  email: string;
   otp: string;
 }
 
 export interface RegisterPayload {
   registration_token: string;
   phone: string;
-  email: string;
   username: string;
   display_name: string;
   avatar_url?: string;

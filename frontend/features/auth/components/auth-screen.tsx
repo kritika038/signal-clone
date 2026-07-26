@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { sendOtp, verifyOtp, registerUser, sendLoginOtp, verifyLoginOtp, checkUsername } from "@/services/auth";
 import { useSessionStore } from "@/store/use-session-store";
 
-type RegisterData = { phone: string; email: string; display_name: string; username: string; avatar_url: string };
+type RegisterData = { phone: string; display_name: string; username: string; avatar_url: string };
 type RegisterStep = "phone" | "otp" | "profile";
 type LoginStep = "identifier" | "otp";
 const REGISTER_STEPS: RegisterStep[] = ["phone", "otp", "profile"];
@@ -106,7 +106,7 @@ export function AuthScreen() {
   
   // Register state
   const [registerStep, setRegisterStep] = useState<RegisterStep>("phone");
-  const [registerData, setRegisterData] = useState<RegisterData>({ phone: "", email: "", display_name: "", username: "", avatar_url: BUILT_IN_AVATARS[0] });
+  const [registerData, setRegisterData] = useState<RegisterData>({ phone: "", display_name: "", username: "", avatar_url: BUILT_IN_AVATARS[0] });
   const [registrationToken, setRegistrationToken] = useState("");
   
   // Login state
@@ -191,13 +191,12 @@ export function AuthScreen() {
   });
 
   const handleRegisterNext = () => {
-    if (registerStep === "phone" && registerData.phone && registerData.email) {
+    if (registerStep === "phone" && registerData.phone) {
       setResendCountdown(30);
-      sendOtpMutation.mutate({ phone: registerData.phone, email: registerData.email });
+      sendOtpMutation.mutate({ phone: registerData.phone });
     } else if (registerStep === "profile" && registerData.display_name && usernameStatus === "available") {
       registerMutation.mutate({ 
         phone: registerData.phone,
-        email: registerData.email,
         display_name: registerData.display_name,
         username: registerData.username,
         avatar_url: registerData.avatar_url,
@@ -213,7 +212,7 @@ export function AuthScreen() {
   };
 
   const onRegisterOtpComplete = () => {
-    if (otp.length === 6) verifyOtpMutation.mutate({ phone: registerData.phone, email: registerData.email, otp });
+    if (otp.length === 6) verifyOtpMutation.mutate({ phone: registerData.phone, otp });
   };
   
   const onLoginOtpComplete = () => {
@@ -241,16 +240,12 @@ export function AuthScreen() {
     if (registerStep === "phone") {
       return (
         <motion.div key="phone" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Enter your phone and email to receive a code.</p>
+          <p className="text-sm text-neutral-400">Enter your phone number to receive a verification code.</p>
           <div className="relative">
             <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg focus-visible:ring-blue-500" placeholder="+1234567890" value={registerData.phone} onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })} autoFocus onKeyDown={(e) => e.key === "Enter" && registerData.email && handleRegisterNext()} />
+            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg focus-visible:ring-blue-500" placeholder="+1234567890" value={registerData.phone} onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })} autoFocus onKeyDown={(e) => e.key === "Enter" && registerData.phone && handleRegisterNext()} />
           </div>
-          <div className="relative mt-2">
-            <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg focus-visible:ring-blue-500" type="email" placeholder="you@example.com" value={registerData.email} onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })} onKeyDown={(e) => e.key === "Enter" && registerData.phone && handleRegisterNext()} />
-          </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={handleRegisterNext} disabled={!registerData.phone || !registerData.email || sendOtpMutation.isPending}>
+          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={handleRegisterNext} disabled={!registerData.phone || sendOtpMutation.isPending}>
             {sendOtpMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {sendOtpMutation.isPending ? "Sending code..." : "Next"} {!sendOtpMutation.isPending && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
@@ -261,13 +256,13 @@ export function AuthScreen() {
     if (registerStep === "otp") {
       return (
         <motion.div key="otp" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Enter the 6-digit code sent to {registerData.email}</p>
+          <p className="text-sm text-neutral-400">Enter the 6-digit code sent to {registerData.phone}</p>
           <OTPInputBoxes value={otp} onChange={(val) => { setOtp(val); setOtpError(""); }} onComplete={onRegisterOtpComplete} error={otpError} />
           <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={onRegisterOtpComplete} disabled={otp.length !== 6 || verifyOtpMutation.isPending}>
             {verifyOtpMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {verifyOtpMutation.isPending ? "Verifying..." : "Verify Code"}
           </Button>
-          <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2 transition-colors" onClick={() => { setResendCountdown(30); sendOtpMutation.mutate({ phone: registerData.phone, email: registerData.email }); }} disabled={resendCountdown > 0 || sendOtpMutation.isPending}>
+          <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2 transition-colors" onClick={() => { setResendCountdown(30); sendOtpMutation.mutate({ phone: registerData.phone }); }} disabled={resendCountdown > 0 || sendOtpMutation.isPending}>
             {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Code"}
           </Button>
           {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
@@ -344,10 +339,10 @@ export function AuthScreen() {
     if (loginStep === "identifier") {
       return (
         <motion.div key="identifier" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Enter your phone or email to receive a login code.</p>
+          <p className="text-sm text-neutral-400">Enter your phone number to receive a login code.</p>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg focus-visible:ring-blue-500" placeholder="you@example.com or +1234567890" value={loginId} onChange={(e) => setLoginId(e.target.value)} autoFocus onKeyDown={(e) => e.key === "Enter" && loginId && handleLoginNext()} />
+            <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg focus-visible:ring-blue-500" placeholder="+1234567890" value={loginId} onChange={(e) => setLoginId(e.target.value)} autoFocus onKeyDown={(e) => e.key === "Enter" && loginId && handleLoginNext()} />
           </div>
           <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4 transition-all" onClick={handleLoginNext} disabled={!loginId || sendLoginOtpMutation.isPending}>
             {sendLoginOtpMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -392,7 +387,7 @@ export function AuthScreen() {
               setMode("welcome");
               setRegisterStep("phone");
               setLoginStep("identifier");
-              setRegisterData({ phone: "", email: "", display_name: "", username: "", avatar_url: BUILT_IN_AVATARS[0] });
+              setRegisterData({ phone: "", display_name: "", username: "", avatar_url: BUILT_IN_AVATARS[0] });
               setOtp("");
               setOtpError("");
               setResendCountdown(0);

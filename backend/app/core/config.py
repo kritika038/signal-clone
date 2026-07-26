@@ -128,16 +128,6 @@ class Settings(BaseSettings):
     SCHEDULER_BACKEND: SchedulerBackend = SchedulerBackend.ASYNC
     NOTIFICATION_BACKEND: NotificationBackend = NotificationBackend.MOCK
 
-    EMAIL_PROVIDER: str = "smtp" # 'smtp', 'resend', or 'mailtrap'
-    RESEND_API_KEY: str | None = None
-    MAILTRAP_API_KEY: str | None = None
-
-    SMTP_HOST: str | None = None
-    SMTP_PORT: int = 587
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    SMTP_FROM_EMAIL: str = "noreply@signalclone.com"
-
 
     FIREBASE_PROJECT_ID: str | None = None
     FIREBASE_CREDENTIALS_PATH: str | None = None

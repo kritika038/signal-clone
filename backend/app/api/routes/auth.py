@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
@@ -85,12 +85,10 @@ async def send_register_otp(
     ip = get_client_ip(request)
     user_agent = request.headers.get("user-agent", "unknown")
     try:
-        await service.send_register_otp(send_in.phone, send_in.email, ip, user_agent)
+        await service.send_register_otp(send_in.phone, ip, user_agent)
         return {
             "success": True,
-            "data": {
-                "message": "OTP code sent to your email successfully."
-            }
+            "message": "Verification code sent."
         }
     except ValueError as e:
         raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_SEND_FAILED", str(e))
@@ -115,7 +113,7 @@ async def verify_register_otp(
             }
         }
     except ValueError as e:
-        raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_VERIFICATION_FAILED", str(e))
+        raise APIException(status.HTTP_400_BAD_REQUEST, "INVALID_VERIFICATION_CODE", "Invalid verification code.")
 
 @router.post("/register", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_register)])
 async def register(
@@ -157,9 +155,7 @@ async def send_login_otp(
         await service.send_login_otp(send_in.login_id, ip, user_agent)
         return {
             "success": True,
-            "data": {
-                "message": "OTP code sent to your email successfully."
-            }
+            "message": "Verification code sent."
         }
     except ValueError as e:
         raise APIException(status.HTTP_400_BAD_REQUEST, "LOGIN_OTP_SEND_FAILED", str(e))
@@ -189,7 +185,7 @@ async def verify_login_otp(
             }
         }
     except ValueError as e:
-        raise APIException(status.HTTP_401_UNAUTHORIZED, "INVALID_CREDENTIALS", str(e))
+        raise APIException(status.HTTP_400_BAD_REQUEST, "INVALID_VERIFICATION_CODE", "Invalid verification code.")
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(

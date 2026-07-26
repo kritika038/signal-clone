@@ -20,7 +20,7 @@ class DatabaseOTPStore(OTPStore):
         Create a new OTP request or update an existing one.
         identifier could be a phone number, email, or registration token.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         
         # Rate Limiting: Max 5 OTPs per hour for this identifier
         # (This applies to the OTPs generated in the last hour)
@@ -77,9 +77,10 @@ class DatabaseOTPStore(OTPStore):
         )
         self.db.add(new_otp)
         await self.db.flush()
+        await self.db.commit()
 
     async def verify(self, identifier: str, otp: str) -> Optional[Dict[str, Any]]:
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         
         # Get the most recent OTP request for this identifier
         result = await self.db.execute(
@@ -102,12 +103,14 @@ class DatabaseOTPStore(OTPStore):
         
         if not verify_password(otp, req.otp_hash):
             await self.db.flush()
+            await self.db.commit()
             return None
             
         # Success - Single Use: delete the record
         payload = req.payload
         await self.db.delete(req)
         await self.db.flush()
+        await self.db.commit()
         
         return payload
 
@@ -119,6 +122,7 @@ class DatabaseOTPStore(OTPStore):
         for req in requests:
             await self.db.delete(req)
         await self.db.flush()
+        await self.db.commit()
 
     async def cleanup_expired(self) -> None:
         now = datetime.now(timezone.utc)
@@ -129,3 +133,4 @@ class DatabaseOTPStore(OTPStore):
         for req in requests:
             await self.db.delete(req)
         await self.db.flush()
+        await self.db.commit()

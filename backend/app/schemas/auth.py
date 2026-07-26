@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field, field_validator
 
 class RegisterSendOTP(BaseModel):
     phone: str = Field(..., examples=["+12025550101"])
-    email: str = Field(..., examples=["user@example.com"])
 
     @field_validator("phone")
     @classmethod
@@ -16,7 +15,6 @@ class RegisterSendOTP(BaseModel):
 
 class RegisterVerifyOTP(BaseModel):
     phone: str = Field(..., examples=["+12025550101"])
-    email: str = Field(..., examples=["user@example.com"])
     otp: str = Field(..., min_length=6, max_length=6, examples=["123456"])
 
     @field_validator("phone")
@@ -30,7 +28,6 @@ class RegisterVerifyOTP(BaseModel):
 class UserRegister(BaseModel):
     registration_token: str = Field(...)
     phone: str = Field(..., examples=["+12025550101"])
-    email: str = Field(..., examples=["user@example.com"])
     username: str = Field(..., min_length=3, max_length=50, examples=["alice"])
     display_name: str = Field(..., min_length=1, max_length=100, examples=["Alice Smith"])
     avatar_url: Optional[str] = Field(default=None, max_length=255)
@@ -51,10 +48,10 @@ class UserRegister(BaseModel):
         return v.lower()
 
 class LoginSendOTP(BaseModel):
-    login_id: str = Field(..., description="Phone number (E.164) or email", examples=["user@example.com", "+12025550101"])
+    login_id: str = Field(..., description="Phone number (E.164)", examples=["+12025550101"])
 
 class LoginVerifyOTP(BaseModel):
-    login_id: str = Field(..., description="Phone number (E.164) or email", examples=["user@example.com", "+12025550101"])
+    login_id: str = Field(..., description="Phone number (E.164)", examples=["+12025550101"])
     otp: str = Field(..., min_length=6, max_length=6, examples=["123456"])
 
 class TokenRefreshRequest(BaseModel):

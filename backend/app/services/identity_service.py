@@ -48,26 +48,19 @@ class IdentityService:
         }
         logger.info(f"[AuthEvent] {log_payload}")
 
-    async def send_register_otp(self, phone: str, email: str, ip: Optional[str], device: Optional[str]) -> None:
-        from app.services.email_service import email_service
-        import random
-
+    async def send_register_otp(self, phone: str, ip: Optional[str], device: Optional[str]) -> None:
         # Validate uniqueness
         phone_user = await self.user_service.get_by_phone(phone)
         if phone_user:
             self._log_auth_event("REGISTER_FAIL_DUPLICATE_PHONE", None, None, ip, device, f"Phone: {phone}")
             raise ValueError("Phone number already registered")
 
-        email_user = await self.user_service.get_by_username(email)  # We should probably have get_by_email, but it's not implemented yet. Let's write raw query or use generic. Wait! I just added email. I'll just skip email unique check here, db will enforce it on insert.
-
-        # Generate 6 digit OTP
-        otp = f"{random.SystemRandom().randint(0, 999999):06d}"
-        payload = {"phone": phone, "email": email}
+        # Mocked Fixed OTP
+        otp = "123456"
+        payload = {"phone": phone}
         
         await self.otp_store.create(phone, payload, otp, ttl_seconds=300)
         
-        # Dispatch Email
-        await email_service.send_otp_email(email, otp)
         self._log_auth_event("REGISTER_OTP_GENERATED", None, None, ip, device, f"Phone: {phone}")
 
     async def verify_register_otp(self, phone: str, otp: str, ip: Optional[str], device: Optional[str]) -> str:
@@ -100,7 +93,7 @@ class IdentityService:
         new_user = User(
             id=uuid.uuid4(),
             phone=payload["phone"],
-            email=payload["email"],
+            email=None,
             username=register_in.username,
             display_name=register_in.display_name,
             avatar_url=register_in.avatar_url,
@@ -127,30 +120,18 @@ class IdentityService:
 
 
     async def send_login_otp(self, login_id: str, ip: Optional[str], device: Optional[str]) -> None:
-        from app.services.email_service import email_service
-        import random
-
-        user = None
-        if login_id.startswith("+") or login_id.isdigit():
-            user = await self.user_service.get_by_phone(login_id)
-        if not user:
-            # We don't have get_by_email, so we fallback to assuming login_id is email if not phone, but wait!
-            # The prompt says phone or email. We need to look up by email.
-            from sqlalchemy import select
-            stmt = select(User).where(User.email == login_id)
-            result = await self.db.execute(stmt)
-            user = result.scalar_one_or_none()
+        user = await self.user_service.get_by_phone(login_id)
             
-        if not user or not user.email:
+        if not user:
             self._log_auth_event("LOGIN_FAIL_NOT_FOUND", None, None, ip, device, f"Identifier: {login_id}")
-            raise ValueError("Account not found or no email associated.")
+            raise ValueError("Account not found.")
 
-        otp = f"{random.SystemRandom().randint(0, 999999):06d}"
-        payload = {"user_id": str(user.id), "email": user.email}
+        # Mocked Fixed OTP
+        otp = "123456"
+        payload = {"user_id": str(user.id), "phone": user.phone}
         
         await self.otp_store.create(login_id, payload, otp, ttl_seconds=300)
         
-        await email_service.send_otp_email(user.email, otp)
         self._log_auth_event("LOGIN_OTP_GENERATED", user.id, None, ip, device, f"Identifier: {login_id}")
 
     async def verify_login_otp(self, login_id: str, otp: str, ip: Optional[str], device_name: Optional[str], device_type: Optional[str]) -> Tuple[User, UserSession, str, str]:
