@@ -216,27 +216,25 @@ export function SignalShell() {
   }, [currentUserId, deferredSearch, searchQueryResult.data]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (overrideContent?: string) => {
+    mutationFn: async (payload: { content: string; attachments: typeof queuedAttachments; replyToId: string | null }) => {
       if (!accessToken || !activeConversationId) {
         throw new Error("No active conversation selected");
       }
-      const textToSend = overrideContent !== undefined ? overrideContent : composerText;
       const uploadedAttachments =
-        queuedAttachments.length > 0
+        payload.attachments.length > 0
           ? await Promise.all(
-              queuedAttachments
+              payload.attachments
                 .filter((attachment): attachment is typeof attachment & { file: File } => "file" in attachment)
                 .map((attachment) => uploadMedia(accessToken, attachment.file))
             )
           : [];
       return sendMessage(accessToken, activeConversationId, {
-        content: textToSend || null,
-        reply_to_id: replyToMessageId,
+        content: payload.content || null,
+        reply_to_id: payload.replyToId,
         attachments: uploadedAttachments,
       });
     },
-    onMutate: async (overrideContent?: string) => {
-      const textToSend = overrideContent !== undefined ? overrideContent : composerText;
+    onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: ["messages", activeConversationId] });
       const previousMessages = queryClient.getQueryData(["messages", activeConversationId]);
       
@@ -244,9 +242,9 @@ export function SignalShell() {
         id: crypto.randomUUID(),
         conversation_id: activeConversationId,
         sender_id: currentUserId,
-        content: textToSend || null,
+        content: payload.content || null,
         message_type: "text",
-        reply_to_id: replyToMessageId,
+        reply_to_id: payload.replyToId,
         is_outgoing: true,
         is_system: false,
         created_at: new Date().toISOString(),
@@ -644,7 +642,7 @@ export function SignalShell() {
                                     return { ...old, pages: newPages };
                                   });
                                   // Retry with the original content
-                                  sendMessageMutation.mutate(message.content || "");
+                                  sendMessageMutation.mutate({ content: message.content || "", attachments: [], replyToId: message.quotedMessageId || null });
                                 }}>
                                   Retry
                                 </button>
@@ -717,7 +715,7 @@ export function SignalShell() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
-                          if (composerText.trim()) sendMessageMutation.mutate();
+                          if (composerText.trim()) sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId });
                         }
                       }}
                     />
@@ -728,7 +726,7 @@ export function SignalShell() {
                   <Button
                     size="icon"
                     className="shrink-0 rounded-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => sendMessageMutation.mutate()}
+                    onClick={() => sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId })}
                     disabled={!composerText.trim() && !queuedAttachments.length}
                   >
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white transform -rotate-90 translate-y-0.5"><path d="M22 12L3 20L6.5 12L3 4L22 12Z" fill="currentColor"/></svg>
