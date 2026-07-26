@@ -70,138 +70,105 @@ export function AuthScreen() {
   });
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-[#0a121c] text-slate-100">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(95,148,255,0.2),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(34,197,94,0.12),_transparent_30%)]" />
-      <div className="relative z-10 grid min-h-screen w-full lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="hidden lg:flex flex-col justify-between border-r border-white/8 p-10">
-          <div className="space-y-5">
-            <Badge className="bg-signal-500/12 text-signal-100 border-signal-400/20">
-              Signal Desktop Experience
-            </Badge>
-            <h1 className="max-w-lg text-5xl font-semibold tracking-tight text-white">
-              Private messaging with the calm, focused feel of Signal.
-            </h1>
-            <p className="max-w-xl text-base leading-7 text-slate-300">
-              Sign in to a desktop-first workspace with conversation search, message reactions,
-              drafts, settings controls, reconnect feedback, and a polished multi-pane layout.
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 text-neutral-100">
+      <div className="w-full max-w-[400px] rounded-2xl border border-neutral-800 bg-neutral-900 p-8 shadow-2xl">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              {mockOtp ? "Verify Number" : mode === "login" ? "Sign In" : "Register"}
+            </h2>
+            <p className="text-sm text-neutral-400 mt-1">
+              {mockOtp ? "Enter the verification code" : "Welcome to Signal Clone"}
             </p>
           </div>
-          <div className="grid gap-4">
-            {[
-              ["Signal-like shell", "Left rail, focused thread view, and profile/settings surfaces."],
-              ["Real auth flow", "Registration, mock OTP verification, session persistence, logout."],
-              ["Graceful backend gaps", "Chat UI is ready while missing APIs are explicitly identified."],
-            ].map(([title, body]) => (
-              <div key={title} className="rounded-[28px] border border-white/8 bg-white/5 p-5 backdrop-blur-xl">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-100">
-                  <ShieldCheck className="h-4 w-4 text-signal-300" />
-                  {title}
-                </div>
-                <p className="text-sm leading-6 text-slate-400">{body}</p>
-              </div>
-            ))}
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
+            {mockOtp ? <Sparkles className="h-6 w-6 text-blue-500" /> : <Lock className="h-6 w-6 text-blue-500" />}
           </div>
-        </section>
+        </div>
 
-        <section className="relative flex items-center justify-center p-6 lg:p-10">
-          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#0d1724]/88 p-6 shadow-2xl shadow-black/30 backdrop-blur-2xl">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-slate-400">Secure Access</p>
-                <h2 className="mt-1 text-3xl font-semibold text-white">
-                  {mockOtp ? "Verify your number" : mode === "login" ? "Welcome back" : "Create account"}
-                </h2>
-              </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-signal-500/12">
-                {mockOtp ? <Sparkles className="h-5 w-5 text-signal-200" /> : <Lock className="h-5 w-5 text-signal-200" />}
-              </div>
+        {!mockOtp ? (
+          <>
+            <div className="mb-8 grid grid-cols-2 gap-1 rounded-lg bg-neutral-950 p-1">
+              <button
+                className={`rounded-md px-4 py-2 text-sm font-medium transition ${mode === "login" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"}`}
+                onClick={() => setMode("login")}
+                type="button"
+              >
+                Login
+              </button>
+              <button
+                className={`rounded-md px-4 py-2 text-sm font-medium transition ${mode === "register" ? "bg-neutral-800 text-white shadow-sm" : "text-neutral-400 hover:text-white"}`}
+                onClick={() => setMode("register")}
+                type="button"
+              >
+                Register
+              </button>
             </div>
 
-            {!mockOtp ? (
-              <>
-                <div className="mb-6 grid grid-cols-2 gap-2 rounded-full bg-white/5 p-1">
-                  <button
-                    className={`rounded-full px-4 py-2 text-sm transition ${mode === "login" ? "bg-white text-slate-950" : "text-slate-300"}`}
-                    onClick={() => setMode("login")}
-                    type="button"
-                  >
-                    Login
-                  </button>
-                  <button
-                    className={`rounded-full px-4 py-2 text-sm transition ${mode === "register" ? "bg-white text-slate-950" : "text-slate-300"}`}
-                    onClick={() => setMode("register")}
-                    type="button"
-                  >
-                    Register
-                  </button>
-                </div>
-
-                {mode === "login" ? (
-                  <form className="space-y-4" onSubmit={loginForm.handleSubmit((values) => loginMutation.mutate(values))}>
-                    <Input placeholder="Phone or username" {...loginForm.register("login_id")} />
-                    <Input type="password" placeholder="Password" {...loginForm.register("password")} />
-                    <Button className="w-full" type="submit" disabled={loginMutation.isPending}>
-                      {loginMutation.isPending ? "Signing in..." : "Login"}
-                    </Button>
-                    {loginMutation.error ? (
-                      <p className="text-sm text-rose-300">{loginMutation.error.message}</p>
-                    ) : null}
-                  </form>
-                ) : (
-                  <form className="space-y-4" onSubmit={registerForm.handleSubmit((values) => registerMutation.mutate(values))}>
-                    <Input placeholder="Display name" {...registerForm.register("display_name")} />
-                    <Input placeholder="Username" {...registerForm.register("username")} />
-                    <Input placeholder="Phone number" {...registerForm.register("phone")} />
-                    <Input type="password" placeholder="Password" {...registerForm.register("password")} />
-                    <Button className="w-full" type="submit" disabled={registerMutation.isPending}>
-                      {registerMutation.isPending ? "Sending OTP..." : "Register"}
-                    </Button>
-                    {registerMutation.error ? (
-                      <p className="text-sm text-rose-300">{registerMutation.error.message}</p>
-                    ) : null}
-                  </form>
-                )}
-              </>
+            {mode === "login" ? (
+              <form className="space-y-4" onSubmit={loginForm.handleSubmit((values) => loginMutation.mutate(values))}>
+                <Input className="bg-neutral-950 border-neutral-800 h-11" placeholder="Phone or username" {...loginForm.register("login_id")} />
+                <Input className="bg-neutral-950 border-neutral-800 h-11" type="password" placeholder="Password" {...loginForm.register("password")} />
+                <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium" type="submit" disabled={loginMutation.isPending}>
+                  {loginMutation.isPending ? "Signing in..." : "Login"}
+                </Button>
+                {loginMutation.error ? (
+                  <p className="text-sm text-red-400">{loginMutation.error.message}</p>
+                ) : null}
+              </form>
             ) : (
-              <form
-                className="space-y-4"
-                onSubmit={otpForm.handleSubmit((values) =>
-                  verifyMutation.mutate({
-                    phone: pendingPhone,
-                    otp: values.otp,
-                  })
-                )}
-              >
-                <div className="rounded-[24px] border border-signal-400/20 bg-signal-500/8 p-4 text-sm text-slate-200">
-                  <div className="mb-2 flex items-center gap-2 font-medium text-white">
-                    <MessageSquareMore className="h-4 w-4 text-signal-200" />
-                    Mock OTP ready
-                  </div>
-                  <p>Use <span className="font-semibold text-signal-100">{mockOtp}</span> for development verification.</p>
-                </div>
-                <Input placeholder="6-digit OTP" {...otpForm.register("otp")} />
-                <Button className="w-full" type="submit" disabled={verifyMutation.isPending}>
-                  {verifyMutation.isPending ? "Verifying..." : "Verify OTP"}
+              <form className="space-y-4" onSubmit={registerForm.handleSubmit((values) => registerMutation.mutate(values))}>
+                <Input className="bg-neutral-950 border-neutral-800 h-11" placeholder="Display name" {...registerForm.register("display_name")} />
+                <Input className="bg-neutral-950 border-neutral-800 h-11" placeholder="Username" {...registerForm.register("username")} />
+                <Input className="bg-neutral-950 border-neutral-800 h-11" placeholder="Phone number" {...registerForm.register("phone")} />
+                <Input className="bg-neutral-950 border-neutral-800 h-11" type="password" placeholder="Password" {...registerForm.register("password")} />
+                <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium" type="submit" disabled={registerMutation.isPending}>
+                  {registerMutation.isPending ? "Sending OTP..." : "Register"}
                 </Button>
-                <Button
-                  className="w-full"
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setMockOtp(null);
-                    setPendingPhone("");
-                    otpForm.reset();
-                  }}
-                >
-                  Back
-                </Button>
-                {verifyMutation.error ? (
-                  <p className="text-sm text-rose-300">{verifyMutation.error.message}</p>
+                {registerMutation.error ? (
+                  <p className="text-sm text-red-400">{registerMutation.error.message}</p>
                 ) : null}
               </form>
             )}
-          </div>
-        </section>
+          </>
+        ) : (
+          <form
+            className="space-y-4"
+            onSubmit={otpForm.handleSubmit((values) =>
+              verifyMutation.mutate({
+                phone: pendingPhone,
+                otp: values.otp,
+              })
+            )}
+          >
+            <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-200">
+              <div className="mb-2 flex items-center gap-2 font-medium text-blue-100">
+                <MessageSquareMore className="h-4 w-4" />
+                Mock OTP ready
+              </div>
+              <p>Use <span className="font-semibold text-white">{mockOtp}</span> for development verification.</p>
+            </div>
+            <Input className="bg-neutral-950 border-neutral-800 h-11 text-center tracking-widest text-lg" placeholder="123456" {...otpForm.register("otp")} />
+            <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium" type="submit" disabled={verifyMutation.isPending}>
+              {verifyMutation.isPending ? "Verifying..." : "Verify OTP"}
+            </Button>
+            <Button
+              className="w-full h-11 text-neutral-400 hover:text-white"
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setMockOtp(null);
+                setPendingPhone("");
+                otpForm.reset();
+              }}
+            >
+              Back
+            </Button>
+            {verifyMutation.error ? (
+              <p className="text-sm text-red-400">{verifyMutation.error.message}</p>
+            ) : null}
+          </form>
+        )}
       </div>
     </div>
   );
