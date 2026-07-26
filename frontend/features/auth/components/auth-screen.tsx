@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Lock, ArrowRight, ArrowLeft, CheckCircle2, Phone, User, Sparkles, Mail, Camera, Loader2, XCircle } from "lucide-react";
+import { Lock, ArrowRight, ArrowLeft, CheckCircle2, Phone, User, Sparkles, Mail, Camera, Loader2, XCircle, Info } from "lucide-react";
 import { useState, useEffect, useRef, KeyboardEvent, ClipboardEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -100,6 +100,25 @@ function OTPInputBoxes({ value, onChange, onComplete, error }: { value: string, 
     </div>
   );
 }
+
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true" || process.env.APP_MODE === "demo";
+
+const DemoNotice = () => {
+  if (!isDemoMode) return null;
+  return (
+    <div className="mt-6 p-4 rounded-xl bg-blue-900/20 border border-blue-800/30 text-left">
+      <div className="flex items-center gap-2 text-blue-400 font-medium mb-1">
+        <Info className="h-4 w-4" />
+        <h4>Demo Build</h4>
+      </div>
+      <p className="text-sm text-blue-200/70 mb-3">Phone verification is simulated for evaluation purposes.</p>
+      <div className="bg-blue-950/50 rounded-lg py-2 px-3 flex justify-between items-center border border-blue-900/50">
+        <span className="text-xs text-blue-300">Verification Code</span>
+        <span className="font-mono text-blue-400 font-bold tracking-widest">123456</span>
+      </div>
+    </div>
+  );
+};
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"welcome" | "login" | "register">("welcome");
@@ -265,6 +284,7 @@ export function AuthScreen() {
           <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2 transition-colors" onClick={() => { setResendCountdown(30); sendOtpMutation.mutate({ phone: registerData.phone }); }} disabled={resendCountdown > 0 || sendOtpMutation.isPending}>
             {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Code"}
           </Button>
+          <DemoNotice />
           {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
         </motion.div>
       );
@@ -364,6 +384,7 @@ export function AuthScreen() {
           <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2 transition-colors" onClick={() => { setResendCountdown(30); sendLoginOtpMutation.mutate({ login_id: loginId }); }} disabled={resendCountdown > 0 || sendLoginOtpMutation.isPending}>
             {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Code"}
           </Button>
+          <DemoNotice />
           {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
         </motion.div>
       );
