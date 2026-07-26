@@ -70,6 +70,8 @@ export function SignalShell() {
   } = useSignalStore();
   const [groupName, setGroupName] = useState("");
   const [showNewGroup, setShowNewGroup] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const deferredSearch = useDeferredValue(searchQuery);
 
@@ -186,15 +188,48 @@ export function SignalShell() {
         attachments: uploadedAttachments,
       });
     },
-    onSuccess: async () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["messages", activeConversationId] });
+      const previousMessages = queryClient.getQueryData(["messages", activeConversationId]);
+      
+      const optimisticMessage = {
+        id: crypto.randomUUID(),
+        conversation_id: activeConversationId,
+        sender_id: currentUserId,
+        content: composerText || null,
+        message_type: "text",
+        reply_to_id: replyToMessageId,
+        is_outgoing: true,
+        is_system: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        attachments: [],
+        reactions: [],
+        receipts: [],
+      };
+
+      queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
+        return old ? [...old, optimisticMessage] : [optimisticMessage];
+      });
+
       setComposerText("");
       clearQueuedAttachments();
       setReplyTarget(null);
       setFeatureNotice(null);
+
+      return { previousMessages };
+    },
+    onError: (error: Error, _, context) => {
+      setFeatureNotice(error.message);
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["messages", activeConversationId], context.previousMessages);
+      }
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
       await queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
     },
-    onError: (error: Error) => setFeatureNotice(error.message),
   });
 
   const editMessageMutation = useMutation({
@@ -238,6 +273,21 @@ export function SignalShell() {
         await queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
       }
     };
+    const handleTypingStart = (data: { user_id: string; conversation_id: string }) => {
+      if (data.conversation_id === activeConversationId && data.user_id !== currentUserId) {
+        setTypingUsers((prev) => new Set(prev).add(data.user_id));
+      }
+    };
+    const handleTypingStop = (data: { user_id: string; conversation_id: string }) => {
+      if (data.conversation_id === activeConversationId) {
+        setTypingUsers((prev) => {
+          const next = new Set(prev);
+          next.delete(data.user_id);
+          return next;
+        });
+      }
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("message.received", handleIncomingChange);
@@ -245,8 +295,15 @@ export function SignalShell() {
     socket.on("message.deleted", handleIncomingChange);
     socket.on("message.delivered", handleIncomingChange);
     socket.on("message.read", handleIncomingChange);
-    socket.on("typing.start", () => setFeatureNotice("Typing indicator event received from Socket.IO."));
+    socket.on("typing.start", handleTypingStart);
+    socket.on("typing.stop", handleTypingStop);
     socket.emit("heartbeat");
+    
+    // Mark messages as read
+    if (activeConversationId) {
+      socket.emit("message.read", { conversation_id: activeConversationId });
+    }
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -255,8 +312,10 @@ export function SignalShell() {
       socket.off("message.deleted", handleIncomingChange);
       socket.off("message.delivered", handleIncomingChange);
       socket.off("message.read", handleIncomingChange);
+      socket.off("typing.start", handleTypingStart);
+      socket.off("typing.stop", handleTypingStop);
     };
-  }, [accessToken, activeConversationId, queryClient, setFeatureNotice, setSocketState]);
+  }, [accessToken, activeConversationId, currentUserId, queryClient, setSocketState]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-neutral-950 text-neutral-200">
@@ -393,9 +452,13 @@ export function SignalShell() {
                 <div>
                   <h2 className="text-[15px] font-medium text-neutral-100">{activeConversation?.title}</h2>
                   <p className="text-xs text-neutral-500">
-                    {conversationDetailQuery.data?.type === "GROUP"
-                      ? `${conversationDetailQuery.data.members.length} members`
-                      : "Online"}
+                    {typingUsers.size > 0 ? (
+                      <span className="text-blue-400">typing...</span>
+                    ) : conversationDetailQuery.data?.type === "GROUP" ? (
+                      `${conversationDetailQuery.data.members.length} members`
+                    ) : (
+                      "Online"
+                    )}
                   </p>
                 </div>
               </div>
@@ -516,7 +579,16 @@ export function SignalShell() {
                       className="max-h-32 min-h-[36px] w-full resize-none border-0 bg-transparent py-2 text-[15px] placeholder:text-neutral-500 focus-visible:ring-0"
                       placeholder="Write a message..."
                       value={composerText}
-                      onChange={(e) => setComposerText(e.target.value)}
+                      onChange={(e) => {
+                        setComposerText(e.target.value);
+                        if (activeConversationId) {
+                          socketService.emit("typing.start", { conversation_id: activeConversationId });
+                          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                          typingTimeoutRef.current = setTimeout(() => {
+                            socketService.emit("typing.stop", { conversation_id: activeConversationId });
+                          }, 3000);
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();

@@ -1,4 +1,4 @@
-import { apiRequest } from "@/services/api";
+import { apiRequest, API_URL } from "@/services/api";
 
 export interface ApiUserSummary {
   id: string;
@@ -165,7 +165,7 @@ export async function deleteMessage(token: string, messageId: string, deleteType
 export async function uploadMedia(token: string, file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/v1/media/upload`, {
+  const response = await fetch(`${API_URL}/api/v1/media/upload`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

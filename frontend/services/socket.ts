@@ -1,8 +1,9 @@
 import { io, type Socket } from "socket.io-client";
+import { API_URL } from "@/services/api";
 
 class SocketService {
   private socket: Socket | null = null;
-  private url = process.env.NEXT_PUBLIC_WS_URL || "";
+  private url = process.env.NEXT_PUBLIC_WS_URL || API_URL;
 
   connect(token?: string) {
     if (this.socket) {

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://signal-clone-backend-xja6.onrender.com";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://signal-clone-backend-xja6.onrender.com";
 
 export class ApiError extends Error {
   status: number;
