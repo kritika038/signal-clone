@@ -58,6 +58,11 @@ async def lifespan(app: FastAPI):
         DisappearingMessageService().purge_expired_messages,
     )
     await runtime_services.scheduler.start()
+
+    if settings.DEMO_SEED:
+        from scripts.seed_demo_users import seed_demo_data
+        await seed_demo_data()
+
     yield
     await runtime_services.scheduler.stop()
 

@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
     LOG_LEVEL: str = "INFO"
     LOG_JSON: bool = True
+    DEMO_SEED: bool = False
 
     SECRET_KEY: str = Field(default="dev-secret-key-change-me")
     ALGORITHM: str = "HS256"
