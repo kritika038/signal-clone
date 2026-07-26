@@ -10,16 +10,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Annotated
 
 
-def parse_cors_origins(value: str | list[str]) -> list[str]:
+def parse_cors_origins(value: Any) -> list[str]:
     if isinstance(value, str):
         if not value:
             return []
         if value.startswith("["):
             import json
-
-            return list(json.loads(value))
+            try:
+                return list(json.loads(value))
+            except json.JSONDecodeError:
+                pass
         return [item.strip() for item in value.split(",") if item.strip()]
-    return value
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    return []
 
 
 class Environment(str, Enum):
@@ -86,7 +90,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "signal"
     SQL_ECHO: bool = False
 
-    BACKEND_CORS_ORIGINS: Annotated[list[str], BeforeValidator(parse_cors_origins)] = Field(default_factory=list)
+    BACKEND_CORS_ORIGINS: Annotated[list[str] | str, BeforeValidator(parse_cors_origins)] = Field(default_factory=list)
 
     REDIS_BACKEND: RedisBackend = RedisBackend.MEMORY
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -95,7 +99,7 @@ class Settings(BaseSettings):
     STORAGE_LOCAL_PATH: str = "./storage"
     STORAGE_PUBLIC_BASE_URL: str = "/api/v1/attachments/download"
     STORAGE_MAX_FILE_SIZE_BYTES: int = 10 * 1024 * 1024
-    STORAGE_ALLOWED_MIME_TYPES: Annotated[list[str], BeforeValidator(parse_cors_origins)] = [
+    STORAGE_ALLOWED_MIME_TYPES: Annotated[list[str] | str, BeforeValidator(parse_cors_origins)] = [
         "image/jpeg",
         "image/png",
         "image/gif",
