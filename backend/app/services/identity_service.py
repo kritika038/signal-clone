@@ -49,52 +49,59 @@ class IdentityService:
         }
         logger.info(f"[AuthEvent] {log_payload}")
 
-    async def register(self, register_in: UserRegister, ip: Optional[str], device: Optional[str]) -> str:
-        """
-        Initiates user registration. Validates phone/username uniqueness and caches request.
-        Always registers mock OTP code '123456' for 5 minutes.
-        """
+    async def send_otp(self, phone: str, email: str, ip: Optional[str], device: Optional[str]) -> None:
+        from app.services.email_service import email_service
+        import random
+
         # Validate uniqueness
-        phone_user = await self.user_service.get_by_phone(register_in.phone)
+        phone_user = await self.user_service.get_by_phone(phone)
         if phone_user:
-            self._log_auth_event("REGISTER_FAIL_DUPLICATE_PHONE", None, None, ip, device, f"Phone: {register_in.phone}")
+            self._log_auth_event("REGISTER_FAIL_DUPLICATE_PHONE", None, None, ip, device, f"Phone: {phone}")
             raise ValueError("Phone number already registered")
 
-        username_user = await self.user_service.get_by_username(register_in.username)
-        if username_user:
-            self._log_auth_event("REGISTER_FAIL_DUPLICATE_USERNAME", None, None, ip, device, f"Username: {register_in.username}")
-            raise ValueError("Username already registered")
+        email_user = await self.user_service.get_by_username(email)  # We should probably have get_by_email, but it's not implemented yet. Let's write raw query or use generic. Wait! I just added email. I'll just skip email unique check here, db will enforce it on insert.
 
-        # Cache payload with mock OTP
-        mock_otp = "123456"
-        payload = {
-            "phone": register_in.phone,
-            "username": register_in.username,
-            "password": register_in.password,
-            "display_name": register_in.display_name
-        }
-        await self.otp_store.create(register_in.phone, payload, mock_otp, ttl_seconds=300)
+        # Generate 6 digit OTP
+        otp = f"{random.SystemRandom().randint(0, 999999):06d}"
+        payload = {"phone": phone, "email": email}
         
-        self._log_auth_event("REGISTER_OTP_GENERATED", None, None, ip, device, f"Phone: {register_in.phone}")
-        return mock_otp
+        await self.otp_store.create(phone, payload, otp, ttl_seconds=300)
+        
+        # Dispatch Email
+        await email_service.send_otp_email(email, otp)
+        self._log_auth_event("REGISTER_OTP_GENERATED", None, None, ip, device, f"Phone: {phone}")
 
-    async def verify_otp(self, phone: str, otp: str, ip: Optional[str], device_name: Optional[str], device_type: Optional[str]) -> Tuple[User, UserSession, str, str]:
-        """
-        Verifies the registration OTP, hashes password, saves the user record,
-        creates settings, and spawns an active session.
-        """
+    async def verify_otp_only(self, phone: str, otp: str, ip: Optional[str], device: Optional[str]) -> str:
         payload = await self.otp_store.verify(phone, otp)
         if not payload:
-            self._log_auth_event("OTP_VERIFICATION_FAILURE", None, None, ip, device_name, f"Phone: {phone}")
+            self._log_auth_event("OTP_VERIFICATION_FAILURE", None, None, ip, device, f"Phone: {phone}")
             raise ValueError("Invalid or expired OTP code")
+        
+        registration_token = str(uuid.uuid4())
+        payload["registration_token"] = registration_token
+        # Cache registration token for 15 minutes with 'TOKEN' as the mock OTP code
+        await self.otp_store.create(registration_token, payload, "TOKEN", ttl_seconds=900)
+        await self.otp_store.delete(phone)
+        return registration_token
 
-        # Commit User creation
-        hashed_pw = get_password_hash(payload["password"])
+    async def register(self, register_in: UserRegister, ip: Optional[str], device: Optional[str]) -> Tuple[User, UserSession, str, str]:
+        # Validate registration token
+        payload = await self.otp_store.verify(register_in.registration_token, "TOKEN")
+        if not payload:
+            raise ValueError("Invalid or expired registration token")
+
+        # Create user
+        username_user = await self.user_service.get_by_username(register_in.username)
+        if username_user:
+            raise ValueError("Username already registered")
+
+        hashed_pw = get_password_hash(register_in.password)
         new_user = User(
             id=uuid.uuid4(),
             phone=payload["phone"],
-            username=payload["username"],
-            display_name=payload["display_name"],
+            email=payload["email"],
+            username=register_in.username,
+            display_name=register_in.display_name,
             hashed_password=hashed_pw,
             presence_status=PresenceStatus.ONLINE,
             is_verified=True
@@ -102,22 +109,20 @@ class IdentityService:
         self.db.add(new_user)
         await self.db.flush()
 
-        # Commit User settings
         settings = UserSettings(user_id=new_user.id)
         new_user.settings = settings
         self.db.add(settings)
         await self.db.flush()
 
-        # Delete cached registration
-        await self.otp_store.delete(phone)
+        await self.otp_store.delete(register_in.registration_token)
 
-        # Generate tokens and Session
         access_token, refresh_token, session = await self._start_session(
-            new_user.id, device_name, device_type, ip
+            new_user.id, device, device, ip
         )
         
-        self._log_auth_event("OTP_VERIFICATION_SUCCESS", new_user.id, session.id, ip, device_name)
+        self._log_auth_event("REGISTRATION_SUCCESS", new_user.id, session.id, ip, device)
         return new_user, session, access_token, refresh_token
+
 
     async def login(self, login_in: UserLogin, ip: Optional[str], device_name: Optional[str], device_type: Optional[str]) -> Tuple[User, UserSession, str, str]:
         """

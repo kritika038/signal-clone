@@ -93,51 +93,73 @@ async def async_client(db_session):
 
 @pytest.mark.asyncio
 async def test_full_auth_registration_lifecycle(async_client):
-    # 1. Registration
-    reg_payload = {
+    # 1. Send OTP
+    send_payload = {
         "phone": "+15555550001",
-        "username": "alice",
-        "password": "Password123!",
-        "display_name": "Alice Smith"
+        "email": "alice@example.com"
     }
-    response = await async_client.post("/api/v1/auth/register", json=reg_payload)
+    response = await async_client.post("/api/v1/auth/otp/send", json=send_payload)
     assert response.status_code == 200
     assert response.json()["success"] is True
-    assert response.json()["data"]["otp_mock"] == "123456"
+
+    # Get OTP from otp_store directly for testing
+    payload = global_otp_store._store.get("+15555550001")
+    assert payload is not None
+    otp = payload["otp"]
 
     # 2. OTP verification (Invalid OTP)
     verify_payload_invalid = {
         "phone": "+15555550001",
-        "otp": "999999"
+        "email": "alice@example.com",
+        "otp": "000000"
     }
-    verify_res_invalid = await async_client.post("/api/v1/auth/verify-otp", json=verify_payload_invalid)
+    verify_res_invalid = await async_client.post("/api/v1/auth/otp/verify", json=verify_payload_invalid)
     assert verify_res_invalid.status_code == 400
     assert verify_res_invalid.json()["success"] is False
 
     # 3. OTP verification (Valid OTP)
     verify_payload_valid = {
         "phone": "+15555550001",
-        "otp": "123456"
+        "email": "alice@example.com",
+        "otp": otp
     }
-    verify_res_valid = await async_client.post("/api/v1/auth/verify-otp", json=verify_payload_valid)
+    verify_res_valid = await async_client.post("/api/v1/auth/otp/verify", json=verify_payload_valid)
     assert verify_res_valid.status_code == 200
     data = verify_res_valid.json()["data"]
+    registration_token = data["registration_token"]
+    assert registration_token is not None
+
+    # 4. Registration
+    reg_payload = {
+        "registration_token": registration_token,
+        "phone": "+15555550001",
+        "email": "alice@example.com",
+        "username": "alice",
+        "password": "Password123!",
+        "display_name": "Alice Smith"
+    }
+    reg_res = await async_client.post("/api/v1/auth/register", json=reg_payload)
+    print(reg_res.json()); assert reg_res.status_code == 200
+    data = reg_res.json()["data"]
     assert data["user"]["phone"] == "+15555550001"
     assert data["tokens"]["access_token"] is not None
 
-    # 4. Duplicate Check ( Alice is now verified and exists in DB )
-    dup_res = await async_client.post("/api/v1/auth/register", json=reg_payload)
+    # 5. Duplicate Check
+    dup_res = await async_client.post("/api/v1/auth/otp/send", json=send_payload)
     assert dup_res.status_code == 400
     assert dup_res.json()["success"] is False
     assert "already registered" in dup_res.json()["error"]["message"]
 
 @pytest.mark.asyncio
 async def test_login_and_logout_lifecycle(async_client):
-    # Create User via registration verify pipeline first
+    # Setup user
+    await async_client.post("/api/v1/auth/otp/send", json={"phone": "+15555550002", "email": "bob@example.com"})
+    otp = global_otp_store._store.get("+15555550002")["otp"]
+    res = await async_client.post("/api/v1/auth/otp/verify", json={"phone": "+15555550002", "email": "bob@example.com", "otp": otp})
+    registration_token = res.json()["data"]["registration_token"]
     await async_client.post("/api/v1/auth/register", json={
-        "phone": "+15555550002", "username": "bob", "password": "Password123!", "display_name": "Bob J"
+        "registration_token": registration_token, "phone": "+15555550002", "email": "bob@example.com", "username": "bob", "password": "Password123!", "display_name": "Bob J"
     })
-    await async_client.post("/api/v1/auth/verify-otp", json={"phone": "+15555550002", "otp": "123456"})
 
     # 1. Login with Phone
     login_phone = await async_client.post("/api/v1/auth/login", json={
@@ -176,11 +198,14 @@ async def test_login_and_logout_lifecycle(async_client):
 
 @pytest.mark.asyncio
 async def test_refresh_token_rotation_and_reuse_attack(async_client):
-    await async_client.post("/api/v1/auth/register", json={
-        "phone": "+15555550003", "username": "charlie", "password": "Password123!", "display_name": "Charlie"
+    await async_client.post("/api/v1/auth/otp/send", json={"phone": "+15555550003", "email": "charlie@example.com"})
+    otp = global_otp_store._store.get("+15555550003")["otp"]
+    res = await async_client.post("/api/v1/auth/otp/verify", json={"phone": "+15555550003", "email": "charlie@example.com", "otp": otp})
+    registration_token = res.json()["data"]["registration_token"]
+    reg_res = await async_client.post("/api/v1/auth/register", json={
+        "registration_token": registration_token, "phone": "+15555550003", "email": "charlie@example.com", "username": "charlie", "password": "Password123!", "display_name": "Charlie"
     })
-    verify_res = await async_client.post("/api/v1/auth/verify-otp", json={"phone": "+15555550003", "otp": "123456"})
-    tokens = verify_res.json()["data"]["tokens"]
+    tokens = reg_res.json()["data"]["tokens"]
     
     # 1. Valid Refresh
     refresh_res = await async_client.post("/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
@@ -200,11 +225,14 @@ async def test_refresh_token_rotation_and_reuse_attack(async_client):
 
 @pytest.mark.asyncio
 async def test_profile_modification_and_session_details(async_client):
-    await async_client.post("/api/v1/auth/register", json={
-        "phone": "+15555550004", "username": "dana", "password": "Password123!", "display_name": "Dana S"
+    await async_client.post("/api/v1/auth/otp/send", json={"phone": "+15555550004", "email": "dana@example.com"})
+    otp = global_otp_store._store.get("+15555550004")["otp"]
+    res = await async_client.post("/api/v1/auth/otp/verify", json={"phone": "+15555550004", "email": "dana@example.com", "otp": otp})
+    registration_token = res.json()["data"]["registration_token"]
+    reg_res = await async_client.post("/api/v1/auth/register", json={
+        "registration_token": registration_token, "phone": "+15555550004", "email": "dana@example.com", "username": "dana", "password": "Password123!", "display_name": "Dana S"
     })
-    verify_res = await async_client.post("/api/v1/auth/verify-otp", json={"phone": "+15555550004", "otp": "123456"})
-    access_token = verify_res.json()["data"]["tokens"]["access_token"]
+    access_token = reg_res.json()["data"]["tokens"]["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}
 
     # 1. Get Session details
@@ -230,14 +258,14 @@ async def test_profile_modification_and_session_details(async_client):
 @pytest.mark.asyncio
 async def test_rate_limiting_register(async_client):
     payload = {
-        "phone": "+15555550005", "username": "limiter", "password": "Password123!", "display_name": "Limiter"
+        "phone": "+15555550005", "email": "limiter@example.com"
     }
     for _ in range(5):
-        res = await async_client.post("/api/v1/auth/register", json=payload)
+        res = await async_client.post("/api/v1/auth/otp/send", json=payload)
         assert res.status_code in [200, 400]
 
     # 6th request triggers rate limit
-    res_limited = await async_client.post("/api/v1/auth/register", json=payload)
+    res_limited = await async_client.post("/api/v1/auth/otp/send", json=payload)
     assert res_limited.status_code == 429
     assert res_limited.json()["success"] is False
     assert "limit exceeded" in res_limited.json()["error"]["message"]
