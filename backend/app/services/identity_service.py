@@ -102,6 +102,7 @@ class IdentityService:
             email=payload["email"],
             username=register_in.username,
             display_name=register_in.display_name,
+            avatar_url=register_in.avatar_url,
             hashed_password=hashed_pw,
             presence_status=PresenceStatus.ONLINE,
             is_verified=True

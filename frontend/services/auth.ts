@@ -2,21 +2,30 @@ import type { AuthSessionPayload, AuthUser, DeviceSession } from "@/types/auth";
 
 import { apiRequest } from "@/services/api";
 
-export interface RegisterPayload {
+export interface SendOtpPayload {
   phone: string;
+  email: string;
+}
+
+export interface VerifyOtpPayload {
+  phone: string;
+  email: string;
+  otp: string;
+}
+
+export interface RegisterPayload {
+  registration_token: string;
+  phone: string;
+  email: string;
   username: string;
   password: string;
   display_name: string;
+  avatar_url?: string;
 }
 
 export interface LoginPayload {
   login_id: string;
   password: string;
-}
-
-export interface VerifyOtpPayload {
-  phone: string;
-  otp: string;
 }
 
 export interface RefreshPayload {
@@ -25,20 +34,23 @@ export interface RefreshPayload {
   token_type: string;
 }
 
-export interface RegistrationResult {
-  message: string;
-  otp_mock: string;
-}
 
-export async function registerUser(payload: RegisterPayload) {
-  return apiRequest<RegistrationResult>("/api/v1/auth/register", {
+export async function sendOtp(payload: SendOtpPayload) {
+  return apiRequest<{ message: string }>("/api/v1/auth/otp/send", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export async function verifyOtp(payload: VerifyOtpPayload) {
-  return apiRequest<AuthSessionPayload>("/api/v1/auth/verify-otp", {
+  return apiRequest<{ registration_token: string; message: string }>("/api/v1/auth/otp/verify", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function registerUser(payload: RegisterPayload) {
+  return apiRequest<AuthSessionPayload>("/api/v1/auth/register", {
     method: "POST",
     body: JSON.stringify(payload),
   });

@@ -1,30 +1,44 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Lock, ArrowRight, ArrowLeft, CheckCircle2, Phone, User, KeyRound, MessageSquareMore, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { Lock, ArrowRight, ArrowLeft, CheckCircle2, Phone, User, KeyRound, MessageSquareMore, Sparkles, Mail, Image as ImageIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail } from "lucide-react";
 import { loginUser, registerUser, verifyOtp, sendOtp } from "@/services/auth";
 import { useSessionStore } from "@/store/use-session-store";
 
-type RegisterData = { phone: string; email: string; display_name: string; username: string; password: string };
-type RegisterStep = "phone" | "otp" | "register" | "profile";
-const STEPS: RegisterStep[] = ["phone", "otp", "register", "profile"];
+type RegisterData = { phone: string; email: string; display_name: string; username: string; password: string; confirm_password: string; avatar_url: string };
+type RegisterStep = "phone" | "otp" | "profile";
+const STEPS: RegisterStep[] = ["phone", "otp", "profile"];
+
+const BUILT_IN_AVATARS = [
+  "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-green-500", 
+  "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-blue-500", 
+  "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500"
+];
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"welcome" | "login" | "register">("welcome");
   const [registerStep, setRegisterStep] = useState<RegisterStep>("phone");
-  const [registerData, setRegisterData] = useState<RegisterData>({ phone: "", email: "", display_name: "", username: "", password: "" });
+  const [registerData, setRegisterData] = useState<RegisterData>({ phone: "", email: "", display_name: "", username: "", password: "", confirm_password: "", avatar_url: BUILT_IN_AVATARS[0] });
   const [loginId, setLoginId] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [registrationToken, setRegistrationToken] = useState("");
+  const [resendCountdown, setResendCountdown] = useState(0);
   const setSession = useSessionStore((state) => state.setSession);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   const loginMutation = useMutation({
     mutationFn: loginUser,
@@ -43,7 +57,7 @@ export function AuthScreen() {
     onSuccess: (payload) => {
       setRegistrationToken(payload.registration_token);
       setOtpError("");
-      setRegisterStep("register");
+      setRegisterStep("profile");
     },
     onError: (error: any) => {
       setOtpError(error.message || "Invalid or expired OTP");
@@ -59,13 +73,20 @@ export function AuthScreen() {
 
   const handleRegisterNext = () => {
     if (registerStep === "phone" && registerData.phone && registerData.email) {
+      setResendCountdown(30);
       sendOtpMutation.mutate({ phone: registerData.phone, email: registerData.email });
     } else if (registerStep === "otp" && otp.length === 6) {
       verifyOtpMutation.mutate({ phone: registerData.phone, email: registerData.email, otp });
-    } else if (registerStep === "register" && registerData.username && registerData.password) {
-      setRegisterStep("profile");
-    } else if (registerStep === "profile" && registerData.display_name) {
-      registerMutation.mutate({ ...registerData, registration_token: registrationToken });
+    } else if (registerStep === "profile" && registerData.display_name && registerData.username && registerData.password && registerData.password === registerData.confirm_password) {
+      registerMutation.mutate({ 
+        phone: registerData.phone,
+        email: registerData.email,
+        display_name: registerData.display_name,
+        username: registerData.username,
+        password: registerData.password,
+        avatar_url: registerData.avatar_url,
+        registration_token: registrationToken 
+      });
     }
   };
 
@@ -103,49 +124,61 @@ export function AuthScreen() {
           <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={otp.length !== 6 || verifyOtpMutation.isPending}>
             {verifyOtpMutation.isPending ? "Verifying..." : "Verify Code"}
           </Button>
-          <Button variant="ghost" className="w-full text-neutral-400 hover:text-white" onClick={() => sendOtpMutation.mutate({ phone: registerData.phone, email: registerData.email })} disabled={sendOtpMutation.isPending}>
-            Resend Code
+          <Button variant="ghost" className="w-full text-neutral-400 hover:text-white mt-2" onClick={() => { setResendCountdown(30); sendOtpMutation.mutate({ phone: registerData.phone, email: registerData.email }); }} disabled={resendCountdown > 0 || sendOtpMutation.isPending}>
+            {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Code"}
           </Button>
           {otpError && <p className="text-sm text-red-400 text-center">{otpError}</p>}
-          {sendOtpMutation.isSuccess && !verifyOtpMutation.isPending && <p className="text-sm text-green-400 text-center">Code sent successfully!</p>}
-        </motion.div>
-      );
-    }
-    if (registerStep === "register") {
-      return (
-        <motion.div key="register" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">Choose a unique username and password.</p>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">@</span>
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-8 text-lg" placeholder="username" value={registerData.username} onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })} autoFocus />
-          </div>
-          <div className="relative">
-            <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg" type="password" placeholder="Password" value={registerData.password} onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })} onKeyDown={(e) => e.key === "Enter" && handleRegisterNext()} />
-          </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.username || !registerData.password}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
         </motion.div>
       );
     }
     if (registerStep === "profile") {
+      const isValid = registerData.display_name && registerData.username && registerData.password && registerData.password === registerData.confirm_password;
       return (
-        <motion.div key="profile" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4">
-          <p className="text-sm text-neutral-400">How should people see you?</p>
-          <div className="flex justify-center mb-6">
-            <div className="relative group cursor-pointer">
-              <div className="h-24 w-24 rounded-full bg-neutral-800 flex items-center justify-center border-2 border-dashed border-neutral-700 group-hover:border-blue-500 transition-colors">
-                <User className="h-10 w-10 text-neutral-500 group-hover:text-blue-400 transition-colors" />
-              </div>
-              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-xs font-medium text-white">Add Photo</span>
-              </div>
+        <motion.div key="profile" custom={1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }} className="space-y-4 max-h-[70vh] overflow-y-auto px-1 scrollbar-hide">
+          <p className="text-sm text-neutral-400">Complete your profile to finish registration.</p>
+          
+          <div className="flex flex-col items-center mb-6 space-y-4">
+            <div className={`h-24 w-24 rounded-full ${registerData.avatar_url.startsWith('bg-') ? registerData.avatar_url : 'bg-neutral-800'} flex items-center justify-center border-4 border-neutral-900 shadow-xl overflow-hidden`}>
+              <User className="h-10 w-10 text-white/50" />
+            </div>
+            
+            <div className="grid grid-cols-6 gap-2 w-full max-w-[280px]">
+              {BUILT_IN_AVATARS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => setRegisterData({ ...registerData, avatar_url: color })}
+                  className={`h-8 w-8 rounded-full ${color} ${registerData.avatar_url === color ? 'ring-2 ring-white ring-offset-2 ring-offset-neutral-900' : 'opacity-80 hover:opacity-100'}`}
+                  type="button"
+                />
+              ))}
+            </div>
+            <p className="text-xs text-neutral-500">Choose an avatar style</p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+              <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-base" placeholder="Display Name" value={registerData.display_name} onChange={(e) => setRegisterData({ ...registerData, display_name: e.target.value })} autoFocus />
+            </div>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 font-medium">@</span>
+              <Input className="bg-neutral-900 border-neutral-800 h-12 pl-8 text-base" placeholder="Username" value={registerData.username} onChange={(e) => setRegisterData({ ...registerData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })} />
+            </div>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+              <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-base" type="password" placeholder="Password" value={registerData.password} onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })} />
+            </div>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
+              <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-base" type="password" placeholder="Confirm Password" value={registerData.confirm_password} onChange={(e) => setRegisterData({ ...registerData, confirm_password: e.target.value })} onKeyDown={(e) => e.key === "Enter" && isValid && handleRegisterNext()} />
             </div>
           </div>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" />
-            <Input className="bg-neutral-900 border-neutral-800 h-12 pl-10 text-lg" placeholder="Display Name" value={registerData.display_name} onChange={(e) => setRegisterData({ ...registerData, display_name: e.target.value })} autoFocus onKeyDown={(e) => e.key === "Enter" && handleRegisterNext()} />
-          </div>
-          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!registerData.display_name || registerMutation.isPending}>
+          
+          {registerData.password && registerData.confirm_password && registerData.password !== registerData.confirm_password && (
+            <p className="text-xs text-red-400 text-center">Passwords do not match</p>
+          )}
+
+          <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base mt-4" onClick={handleRegisterNext} disabled={!isValid || registerMutation.isPending}>
             {registerMutation.isPending ? "Creating account..." : "Complete Registration"}
           </Button>
           {registerMutation.error ? <p className="text-sm text-red-400 text-center">{registerMutation.error.message}</p> : null}
@@ -168,10 +201,10 @@ export function AuthScreen() {
             } else {
               setMode("welcome");
               setRegisterStep("phone");
-              setRegisterData({ phone: "", email: "", display_name: "", username: "", password: "" });
+              setRegisterData({ phone: "", email: "", display_name: "", username: "", password: "", confirm_password: "", avatar_url: BUILT_IN_AVATARS[0] });
               setOtp("");
               setOtpError("");
-
+              setResendCountdown(0);
             }
           }}>
             <ArrowLeft className="h-6 w-6" />

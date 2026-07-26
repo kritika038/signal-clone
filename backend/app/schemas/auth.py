@@ -2,11 +2,39 @@ import re
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-class UserRegister(BaseModel):
+class OTPSend(BaseModel):
     phone: str = Field(..., examples=["+12025550101"])
+    email: str = Field(..., examples=["user@example.com"])
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
+        if not pattern.match(v):
+            raise ValueError("Phone number must comply with E.164 standard formatting (e.g. +12025550101)")
+        return v
+
+class OTPVerify(BaseModel):
+    phone: str = Field(..., examples=["+12025550101"])
+    email: str = Field(..., examples=["user@example.com"])
+    otp: str = Field(..., min_length=6, max_length=6, examples=["123456"])
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
+        if not pattern.match(v):
+            raise ValueError("Phone number must comply with E.164 standard formatting")
+        return v
+
+class UserRegister(BaseModel):
+    registration_token: str = Field(...)
+    phone: str = Field(..., examples=["+12025550101"])
+    email: str = Field(..., examples=["user@example.com"])
     username: str = Field(..., min_length=3, max_length=50, examples=["alice"])
     password: str = Field(..., min_length=8, max_length=64, examples=["SignalSecretPass123!"])
     display_name: str = Field(..., min_length=1, max_length=100, examples=["Alice Smith"])
+    avatar_url: Optional[str] = Field(default=None, max_length=255)
 
     @field_validator("phone")
     @classmethod
@@ -22,18 +50,6 @@ class UserRegister(BaseModel):
         if not v.isalnum() and "_" not in v:
             raise ValueError("Username can only contain alphanumeric characters and underscores")
         return v.lower()
-
-class OTPVerify(BaseModel):
-    phone: str = Field(..., examples=["+12025550101"])
-    otp: str = Field(..., min_length=6, max_length=6, examples=["123456"])
-
-    @field_validator("phone")
-    @classmethod
-    def validate_phone(cls, v: str) -> str:
-        pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
-        if not pattern.match(v):
-            raise ValueError("Phone number must comply with E.164 standard formatting")
-        return v
 
 class UserLogin(BaseModel):
     login_id: str = Field(..., description="Phone number (E.164) or username", examples=["alice", "+12025550101"])
