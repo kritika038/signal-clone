@@ -95,6 +95,16 @@ def create_app() -> socketio.ASGIApp:
     app.include_router(search.router, prefix=settings.API_V1_STR)
 
 
+    @app.get("/", tags=["System"])
+    async def root():
+        return {
+            "success": True,
+            "message": f"{settings.PROJECT_NAME} is running",
+            "docs": "/docs",
+            "health": "/live",
+            "openapi": "/openapi.json"
+        }
+
     @app.get("/health", tags=["System"])
     async def health_check():
         return {"success": True, "data": await health_service.health()}
