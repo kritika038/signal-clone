@@ -1,12 +1,14 @@
 import re
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi.security import APIKeyHeader
 from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_async_db
+from app.api.deps import get_current_user, get_async_db, get_session_manager
+from app.implementations.db_session_manager import DBSessionManager
 from app.services.runtime import runtime_services
 from app.models.user import User
 from app.models.message import Message
@@ -197,8 +199,23 @@ async def get_conversation_links(
 @upload_router.post("/upload", response_model=Dict[str, Any])
 async def upload_media(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    authorization: Optional[str] = Depends(APIKeyHeader(name="Authorization", auto_error=False)),
+    db: AsyncSession = Depends(get_async_db),
+    session_manager: DBSessionManager = Depends(get_session_manager),
 ):
+    # Try to authenticate, but allow anonymous (for avatar upload during registration)
+    current_user_id = None
+    if authorization:
+        token = authorization[7:] if authorization.lower().startswith("bearer ") else authorization
+        try:
+            from app.core.config import settings
+            from jose import jwt
+            import uuid
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            current_user_id = uuid.UUID(payload["sub"])
+        except Exception:
+            pass
+
     file_bytes = await file.read()
     if not file.filename or not file.content_type:
         raise APIException(status.HTTP_400_BAD_REQUEST, "INVALID_FILE", "Uploaded file is missing metadata")
@@ -211,6 +228,6 @@ async def upload_media(
         "success": True,
         "data": {
             **upload,
-            "uploaded_by": str(current_user.id),
+            "uploaded_by": str(current_user_id) if current_user_id else None,
         },
     }

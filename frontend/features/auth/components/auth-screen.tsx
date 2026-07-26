@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Lock, ArrowRight, ArrowLeft, CheckCircle2, Phone, User, Sparkles, Mail, Camera, Loader2, XCircle, Info } from "lucide-react";
 import { useState, useEffect, useRef, KeyboardEvent, ClipboardEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,6 +143,10 @@ export function AuthScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const setSession = useSessionStore((state) => state.setSession);
+  const router = useRouter();
+  
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -206,19 +211,45 @@ export function AuthScreen() {
     mutationFn: registerUser,
     onSuccess: (payload) => {
       setSession(payload);
+      router.push("/conversations");
     },
   });
 
-  const handleRegisterNext = () => {
+  const handleRegisterNext = async () => {
     if (registerStep === "phone" && registerData.phone) {
       setResendCountdown(30);
       sendOtpMutation.mutate({ phone: registerData.phone });
     } else if (registerStep === "profile" && registerData.display_name && usernameStatus === "available") {
+      let finalAvatarUrl = registerData.avatar_url;
+      
+      if (avatarFile) {
+        setIsUploading(true);
+        try {
+          const formData = new FormData();
+          formData.append("file", avatarFile);
+          
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://signal-clone-backend-xja6.onrender.com";
+          const response = await fetch(`${apiUrl}/api/v1/media/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          
+          const result = await response.json();
+          if (result.success && result.data.url) {
+            finalAvatarUrl = result.data.url;
+          }
+        } catch (error) {
+          console.error("Avatar upload failed:", error);
+        } finally {
+          setIsUploading(false);
+        }
+      }
+
       registerMutation.mutate({ 
         phone: registerData.phone,
         display_name: registerData.display_name,
         username: registerData.username,
-        avatar_url: registerData.avatar_url,
+        avatar_url: finalAvatarUrl,
         registration_token: registrationToken 
       });
     }
@@ -240,7 +271,7 @@ export function AuthScreen() {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setRegisterData({ ...registerData, avatar_url: reader.result as string });
@@ -329,7 +360,10 @@ export function AuthScreen() {
             {isBase64Avatar && (
               <button
                 type="button"
-                onClick={() => setRegisterData({ ...registerData, avatar_url: BUILT_IN_AVATARS[0] })}
+                onClick={() => {
+                  setAvatarFile(null);
+                  setRegisterData({ ...registerData, avatar_url: BUILT_IN_AVATARS[0] });
+                }}
                 className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors focus-visible:outline-none focus-visible:underline"
                 aria-label="Remove uploaded photo and revert to generated avatar"
               >
@@ -405,11 +439,11 @@ export function AuthScreen() {
           <Button 
             className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg mt-6 transition-all rounded-xl shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:shadow-none" 
             onClick={handleRegisterNext} 
-            disabled={!isValid || registerMutation.isPending}
-            aria-disabled={!isValid || registerMutation.isPending}
+            disabled={!isValid || registerMutation.isPending || isUploading}
+            aria-disabled={!isValid || registerMutation.isPending || isUploading}
           >
-            {registerMutation.isPending ? <Loader2 className="mr-3 h-5 w-5 animate-spin" /> : null}
-            {registerMutation.isPending ? "Creating account..." : "Complete Registration"}
+            {(registerMutation.isPending || isUploading) ? <Loader2 className="mr-3 h-5 w-5 animate-spin" /> : null}
+            {(registerMutation.isPending || isUploading) ? "Completing Registration..." : "Complete Registration"}
           </Button>
           {registerMutation.error ? (
             <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-sm text-red-400 text-center bg-red-950/50 p-2 rounded-lg border border-red-900/50">
