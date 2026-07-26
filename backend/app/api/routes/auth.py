@@ -253,3 +253,15 @@ async def me(user: User = Depends(get_current_user)):
     }
 
 
+@router.get("/check-username", status_code=status.HTTP_200_OK)
+async def check_username(
+    username: str,
+    service: IdentityService = Depends(get_identity_service)
+):
+    user = await service.user_service.get_by_username(username)
+    return {
+        "success": True,
+        "data": {
+            "available": user is None
+        }
+    }
