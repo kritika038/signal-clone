@@ -81,7 +81,7 @@ def patch_db_session(db_engine):
 @pytest.mark.asyncio
 async def test_duplicate_client_message_id_idempotency(db_engine, test_db: AsyncSession):
     # Setup conversation
-    u1 = User(id=uuid.uuid4(), phone="+15559000001", hashed_password="pw", username="sender")
+    u1 = User(id=uuid.uuid4(), phone="+15559000001", username="sender")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -113,7 +113,7 @@ async def test_duplicate_client_message_id_idempotency(db_engine, test_db: Async
 
 @pytest.mark.asyncio
 async def test_message_replies_and_quotes(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000002", hashed_password="pw", username="sender")
+    u1 = User(id=uuid.uuid4(), phone="+15559000002", username="sender")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -139,7 +139,7 @@ async def test_message_replies_and_quotes(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_message_forwarding(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000003", hashed_password="pw", username="sender")
+    u1 = User(id=uuid.uuid4(), phone="+15559000003", username="sender")
     conv1 = Conversation(type="DIRECT")
     conv2 = Conversation(type="DIRECT")
     test_db.add_all([u1, conv1, conv2])
@@ -168,7 +168,7 @@ async def test_message_forwarding(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_message_delete_for_everyone(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000004", hashed_password="pw", username="sender")
+    u1 = User(id=uuid.uuid4(), phone="+15559000004", username="sender")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -189,8 +189,8 @@ async def test_message_delete_for_everyone(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_message_delete_for_me(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000005", hashed_password="pw", username="user1")
-    u2 = User(id=uuid.uuid4(), phone="+15559000006", hashed_password="pw", username="user2")
+    u1 = User(id=uuid.uuid4(), phone="+15559000005", username="user1")
+    u2 = User(id=uuid.uuid4(), phone="+15559000006", username="user2")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, u2, conv])
     await test_db.flush()
@@ -233,7 +233,7 @@ async def test_message_delete_for_me(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_pin_and_star_message(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000007", hashed_password="pw", username="user")
+    u1 = User(id=uuid.uuid4(), phone="+15559000007", username="user")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -263,7 +263,7 @@ async def test_pin_and_star_message(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_emoji_reactions(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000008", hashed_password="pw", username="user")
+    u1 = User(id=uuid.uuid4(), phone="+15559000008", username="user")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -311,7 +311,7 @@ async def test_emoji_reactions(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_scheduled_message_delivery(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000009", hashed_password="pw", username="sender")
+    u1 = User(id=uuid.uuid4(), phone="+15559000009", username="sender")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -350,7 +350,7 @@ async def test_scheduled_message_delivery(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_disappearing_message_purging(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000010", hashed_password="pw", username="sender")
+    u1 = User(id=uuid.uuid4(), phone="+15559000010", username="sender")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()
@@ -392,7 +392,7 @@ async def test_disappearing_message_purging(db_engine, test_db: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_conversation_drafts(db_engine, test_db: AsyncSession):
-    u1 = User(id=uuid.uuid4(), phone="+15559000011", hashed_password="pw", username="user")
+    u1 = User(id=uuid.uuid4(), phone="+15559000011", username="user")
     conv = Conversation(type="DIRECT")
     test_db.add_all([u1, conv])
     await test_db.flush()

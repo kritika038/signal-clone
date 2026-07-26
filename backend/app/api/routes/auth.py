@@ -18,14 +18,7 @@ from app.core.exceptions import APIException
 from app.implementations.db_session_manager import DBSessionManager
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.schemas.auth import (
-    UserRegister,
-    OTPVerify,
-    UserLogin,
-    TokenRefreshRequest,
-    TokenResponse,
-    ProfileUpdate
-)
+
 from app.services.identity_service import IdentityService
 from app.services.user_service import UserService
 
@@ -78,10 +71,8 @@ from app.schemas.auth import (
     RegisterSendOTP,
     LoginVerifyOTP,
     LoginSendOTP,
-    UserLogin,
     TokenRefreshRequest,
-    TokenResponse,
-    ProfileUpdate
+    TokenResponse
 )
 
 
@@ -151,19 +142,7 @@ async def register(
     except ValueError as e:
         raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED", str(e))
 
-@router.get("/check-username", status_code=status.HTTP_200_OK)
-async def check_username(
-    username: str,
-    db: AsyncSession = Depends(get_async_db)
-):
-    user_service = UserService(db)
-    existing_user = await user_service.get_by_username(username)
-    return {
-        "success": True,
-        "data": {
-            "available": existing_user is None
-        }
-    }
+
 
 
 @router.post("/login/send-otp", status_code=status.HTTP_200_OK, dependencies=[Depends(rate_limit_login)])
@@ -275,30 +254,4 @@ async def me(user: User = Depends(get_current_user)):
         "data": format_user_data(user)
     }
 
-@router.patch("/me", status_code=status.HTTP_200_OK)
-async def update_profile(
-    profile_in: ProfileUpdate,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_async_db)
-):
-    user_service = UserService(db)
-    updated_user = await user_service.update_profile(user.id, profile_in)
-    return {
-        "success": True,
-        "data": format_user_data(updated_user)
-    }
 
-@router.get("/session", status_code=status.HTTP_200_OK)
-async def session_details(user_and_session: tuple[User, UserSession] = Depends(get_current_user_and_session)):
-    _, session = user_and_session
-    return {
-        "success": True,
-        "data": {
-            "session_id": str(session.id),
-            "device_name": session.device_name,
-            "device_type": session.device_type,
-            "ip_address": session.ip_address,
-            "last_activity": session.last_activity.isoformat() if session.last_activity else None,
-            "expires_at": session.expires_at.isoformat()
-        }
-    }

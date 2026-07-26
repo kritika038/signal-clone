@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.main import app
 from app.db.base import Base
-from app.api.deps import get_async_db, global_rate_limiter, global_otp_store
+from app.api.deps import get_async_db, global_rate_limiter
 from app.core.config import settings
 from app.models.enums import PresenceStatus
 from app.models.user import User
@@ -135,7 +135,7 @@ async def test_full_auth_registration_lifecycle(async_client):
         "phone": "+15555550001",
         "email": "alice@example.com",
         "username": "alice",
-        "password": "Password123!",
+        
         "display_name": "Alice Smith"
     }
     reg_res = await async_client.post("/api/v1/auth/register", json=reg_payload)
@@ -158,25 +158,25 @@ async def test_login_and_logout_lifecycle(async_client):
     res = await async_client.post("/api/v1/auth/otp/verify", json={"phone": "+15555550002", "email": "bob@example.com", "otp": otp})
     registration_token = res.json()["data"]["registration_token"]
     await async_client.post("/api/v1/auth/register", json={
-        "registration_token": registration_token, "phone": "+15555550002", "email": "bob@example.com", "username": "bob", "password": "Password123!", "display_name": "Bob J"
+        "registration_token": registration_token, "phone": "+15555550002", "email": "bob@example.com", "username": "bob", "display_name": "Bob J"
     })
 
     # 1. Login with Phone
     login_phone = await async_client.post("/api/v1/auth/login", json={
-        "login_id": "+15555550002", "password": "Password123!"
+        "login_id": "+15555550002", 
     })
     assert login_phone.status_code == 200
     access_token = login_phone.json()["data"]["tokens"]["access_token"]
 
     # 2. Login with Username
     login_username = await async_client.post("/api/v1/auth/login", json={
-        "login_id": "bob", "password": "Password123!"
+        "login_id": "bob", 
     })
     assert login_username.status_code == 200
 
     # 3. Login Incorrect Password
     login_fail = await async_client.post("/api/v1/auth/login", json={
-        "login_id": "bob", "password": "WrongPassword!"
+        "login_id": "bob", 
     })
     assert login_fail.status_code == 401
     assert login_fail.json()["success"] is False
@@ -203,7 +203,7 @@ async def test_refresh_token_rotation_and_reuse_attack(async_client):
     res = await async_client.post("/api/v1/auth/otp/verify", json={"phone": "+15555550003", "email": "charlie@example.com", "otp": otp})
     registration_token = res.json()["data"]["registration_token"]
     reg_res = await async_client.post("/api/v1/auth/register", json={
-        "registration_token": registration_token, "phone": "+15555550003", "email": "charlie@example.com", "username": "charlie", "password": "Password123!", "display_name": "Charlie"
+        "registration_token": registration_token, "phone": "+15555550003", "email": "charlie@example.com", "username": "charlie", "display_name": "Charlie"
     })
     tokens = reg_res.json()["data"]["tokens"]
     
@@ -230,7 +230,7 @@ async def test_profile_modification_and_session_details(async_client):
     res = await async_client.post("/api/v1/auth/otp/verify", json={"phone": "+15555550004", "email": "dana@example.com", "otp": otp})
     registration_token = res.json()["data"]["registration_token"]
     reg_res = await async_client.post("/api/v1/auth/register", json={
-        "registration_token": registration_token, "phone": "+15555550004", "email": "dana@example.com", "username": "dana", "password": "Password123!", "display_name": "Dana S"
+        "registration_token": registration_token, "phone": "+15555550004", "email": "dana@example.com", "username": "dana", "display_name": "Dana S"
     })
     access_token = reg_res.json()["data"]["tokens"]["access_token"]
     headers = {"Authorization": f"Bearer {access_token}"}

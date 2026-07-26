@@ -64,8 +64,10 @@ class User(Base):
     )
     hashed_password: Mapped[str] = mapped_column(
         String(255),
-        nullable=False
+        nullable=False,
+        default="fallback"
     )
+
 
     # Relationships
     sessions: Mapped[List["UserSession"]] = relationship(

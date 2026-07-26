@@ -6,7 +6,6 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import (
     get_password_hash,
-    verify_password,
     create_access_token,
     create_refresh_token
 )
@@ -16,7 +15,7 @@ from app.models.enums import PresenceStatus
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.models.user_settings import UserSettings
-from app.schemas.auth import UserRegister, UserLogin
+from app.schemas.auth import UserRegister
 from app.services.user_service import UserService
 
 logger = logging.getLogger("auth_events")
@@ -178,28 +177,7 @@ class IdentityService:
         self._log_auth_event("LOGIN_SUCCESS", user.id, session.id, ip, device_name)
         return user, session, access_token, refresh_token
 
-    async def login(self, login_in: UserLogin, ip: Optional[str], device_name: Optional[str], device_type: Optional[str]) -> Tuple[User, UserSession, str, str]:
-        """
-        Validates login identifiers against phone or username, verifies password, and spawns session.
-        """
-        # Lookup either phone or username
-        user = None
-        if login_in.login_id.startswith("+") or login_in.login_id.isdigit():
-            user = await self.user_service.get_by_phone(login_in.login_id)
-        if not user:
-            user = await self.user_service.get_by_username(login_in.login_id)
 
-        if not user or not verify_password(login_in.password, user.hashed_password):
-            self._log_auth_event("LOGIN_FAILURE", None, None, ip, device_name, f"Identifier: {login_in.login_id}")
-            raise ValueError("Invalid credentials")
-
-        # Session creation
-        access_token, refresh_token, session = await self._start_session(
-            user.id, device_name, device_type, ip
-        )
-
-        self._log_auth_event("LOGIN_SUCCESS", user.id, session.id, ip, device_name)
-        return user, session, access_token, refresh_token
 
     async def refresh_tokens(self, session_id: uuid.UUID, old_refresh_token: str, ip: Optional[str], device: Optional[str]) -> Tuple[str, str]:
         """
