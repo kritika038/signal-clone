@@ -71,17 +71,20 @@ def create_app() -> socketio.ASGIApp:
         lifespan=lifespan,
     )
 
-    cors_origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS] if settings.BACKEND_CORS_ORIGINS else []
+    cors_origins = [str(origin).strip() for origin in settings.BACKEND_CORS_ORIGINS if str(origin).strip()] if settings.BACKEND_CORS_ORIGINS else []
     
+    # Add SecurityHeadersMiddleware FIRST so it runs AFTER CORSMiddleware
+    app.add_middleware(SecurityHeadersMiddleware)
+
+    # Add CORSMiddleware LAST so it runs FIRST (outermost layer)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins if cors_origins else ["http://localhost:3000", "http://127.0.0.1:3000"],
-        allow_origin_regex=r"^https://signal-clone(?:-[a-zA-Z0-9-]+)?\.vercel\.app$" if not cors_origins else None,
+        allow_origin_regex=r"^https://signal-clone(?:-[a-zA-Z0-9-]+)?\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_middleware(SecurityHeadersMiddleware)
 
     register_exception_handlers(app)
     app.include_router(auth.router, prefix=settings.API_V1_STR)
