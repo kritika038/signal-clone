@@ -5,15 +5,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   Image as ImageIcon,
-  LogOut,
   Menu,
   MessageSquarePlus,
   MoonStar,
   Search,
-  Settings,
   Smile,
   UsersRound,
   Video,
+  Edit2,
+  Settings,
+  Trash2,
+  Copy,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -34,6 +36,7 @@ import {
   sendMessage,
   uploadMedia,
 } from "@/services/chat";
+import { NewChatModal } from "./new-chat-modal";
 import { socketService } from "@/services/socket";
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
@@ -73,6 +76,7 @@ export function SignalShell() {
   } = useSignalStore();
   const [groupName, setGroupName] = useState("");
   const [showNewGroup, setShowNewGroup] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -363,7 +367,7 @@ export function SignalShell() {
             <ToolbarIcon label="Settings" onClick={() => openSettings("profile")}>
               <Settings className="h-4 w-4" />
             </ToolbarIcon>
-            <ToolbarIcon label="New Chat" onClick={() => setShowNewGroup(true)}>
+            <ToolbarIcon label="New Chat" onClick={() => setShowNewChat(true)}>
               <MessageSquarePlus className="h-4 w-4" />
             </ToolbarIcon>
             <ToolbarIcon label="Log Out" onClick={handleLogout}>
@@ -440,9 +444,16 @@ export function SignalShell() {
                           {formatSidebarTime(conversation.lastMessageAt)}
                         </span>
                       </div>
-                      <p className={`truncate text-sm ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-400"}`}>
-                        {conversation.lastMessage || "No messages yet"}
-                      </p>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className={`truncate text-sm pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-400"}`}>
+                          {conversation.lastMessage || "No messages yet"}
+                        </p>
+                        {conversation.unreadCount > 0 && (
+                          <div className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-medium text-white">
+                            {conversation.unreadCount}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </button>
                 ))
@@ -555,20 +566,29 @@ export function SignalShell() {
                             <div className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500"}`}>
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
-                              {message.isOutgoing && <span>{message.status === "read" ? "✓✓" : message.status === "delivered" ? "✓✓" : "✓"}</span>}
+                              {message.isOutgoing && (
+                                <span className={message.status === "read" ? "text-blue-900 font-bold" : ""}>
+                                  {message.status === "read" ? "✓✓" : message.status === "delivered" ? "✓✓" : "✓"}
+                                </span>
+                              )}
                             </div>
                             
                             {/* Message Actions (Hover) */}
-                            {message.isOutgoing && (
-                              <div className="absolute -left-16 top-1/2 hidden -translate-y-1/2 items-center gap-1 group-hover:flex">
-                                <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })}>
-                                  <Settings className="h-3 w-3" />
-                                </button>
-                                <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })}>
-                                  <LogOut className="h-3 w-3" />
-                                </button>
-                              </div>
-                            )}
+                            <div className={`absolute ${message.isOutgoing ? "-left-24" : "-right-8"} top-1/2 hidden -translate-y-1/2 items-center gap-1 group-hover:flex`}>
+                              <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-white" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
+                                <Copy className="h-3 w-3" />
+                              </button>
+                              {message.isOutgoing && (
+                                <>
+                                  <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
+                                    <Edit2 className="h-3 w-3" />
+                                  </button>
+                                  <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </motion.div>
                       </div>
@@ -651,6 +671,7 @@ export function SignalShell() {
 
       {/* Settings Overlay & Modals */}
       <SettingsPanel />
+      <NewChatModal isOpen={showNewChat} onClose={() => setShowNewChat(false)} />
 
       <AnimatePresence>
         {showNewGroup && (

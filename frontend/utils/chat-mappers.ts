@@ -58,6 +58,9 @@ export function mapApiConversation(conversation: ApiConversation, currentUserId:
       .join(", ") ||
     "Conversation";
 
+  const myMember = conversation.members.find((member) => member.user_id === currentUserId);
+  const unreadCount = myMember?.last_read_message_id !== conversation.last_message_id && conversation.last_message_id && conversation.last_message?.sender_id !== currentUserId ? 1 : 0;
+
   return {
     id: conversation.id,
     kind: conversation.type === "GROUP" ? "group" : "direct",
@@ -76,7 +79,7 @@ export function mapApiConversation(conversation: ApiConversation, currentUserId:
             : "offline",
       about: member.user?.bio || "",
     })),
-    unreadCount: 0,
+    unreadCount,
     isMuted: false,
     lastMessage: conversation.last_message?.content || "No messages yet",
     lastMessageAt: conversation.last_activity_at,

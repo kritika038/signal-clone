@@ -94,6 +94,12 @@ export interface ApiConversation {
 }
 
 export interface ApiSearchResult {
+  users: Array<{
+    id: string;
+    username: string | null;
+    display_name: string | null;
+    phone: string;
+  }>;
   contacts: Array<{
     id: string;
     owner_id: string;

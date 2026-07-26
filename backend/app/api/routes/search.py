@@ -44,6 +44,23 @@ async def global_search(
     contact_result = await db.execute(contact_query)
     contacts = contact_result.scalars().all()
 
+    user_query = (
+        select(User)
+        .where(
+            and_(
+                User.deleted_at.is_(None),
+                or_(
+                    User.username.ilike(f"%{q}%"),
+                    User.display_name.ilike(f"%{q}%"),
+                    User.phone.ilike(f"%{q}%"),
+                )
+            )
+        )
+        .limit(20)
+    )
+    user_result = await db.execute(user_query)
+    users = user_result.scalars().all()
+
     conversations = await ConversationRepository(db).search_conversations(current_user.id, q)
 
     member_subquery = (
@@ -78,6 +95,15 @@ async def global_search(
     return {
         "success": True,
         "data": {
+            "users": [
+                {
+                    "id": str(u.id),
+                    "username": u.username,
+                    "display_name": u.display_name,
+                    "phone": u.phone,
+                }
+                for u in users
+            ],
             "contacts": [format_contact(contact) for contact in contacts],
             "conversations": [format_conversation(conversation) for conversation in conversations],
             "messages": [format_message(message) for message in messages],
