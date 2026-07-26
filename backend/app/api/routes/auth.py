@@ -139,7 +139,14 @@ async def register(
             }
         }
     except ValueError as e:
+        import logging
+        logging.error(f"ValueError in register: {str(e)}")
         raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED", str(e))
+    except Exception as e:
+        import logging
+        import traceback
+        logging.error(f"Unexpected Exception in register: {traceback.format_exc()}")
+        raise APIException(status.HTTP_400_BAD_REQUEST, "REGISTRATION_CRASH", f"Backend Crash: {type(e).__name__} - {str(e)}")
 
 
 

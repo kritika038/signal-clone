@@ -76,15 +76,20 @@ class IdentityService:
         return registration_token
 
     async def register(self, register_in: UserRegister, ip: Optional[str], device: Optional[str]) -> Tuple[User, UserSession, str, str]:
+        import logging
+        logging.info(f"Starting registration for user: {register_in.username}")
         # Validate registration token against server state and consume it exactly once
         payload = await self.otp_store.verify(register_in.registration_token, register_in.registration_token)
         if not payload:
+            logging.error("Registration token verification failed")
             raise ValueError("Invalid or expired registration token")
             
         phone = payload.get("phone")
         if not phone:
+            logging.error("No phone found in registration payload")
             raise ValueError("Invalid registration payload state")
 
+        logging.info(f"Token verified for phone {phone}. Checking for duplicates.")
         # Create user
         phone_user = await self.user_service.get_by_phone(phone)
         if phone_user:
@@ -94,6 +99,7 @@ class IdentityService:
         if username_user:
             raise ValueError("Username already registered")
 
+        logging.info("Duplicates check passed. Creating user.")
         import secrets
         random_fallback_pw = secrets.token_urlsafe(32)
         hashed_pw = get_password_hash(random_fallback_pw)
@@ -109,12 +115,16 @@ class IdentityService:
             is_verified=True
         )
         self.db.add(new_user)
+        logging.info(f"Added new_user to db session with ID {new_user.id}")
         await self.db.flush()
 
+        logging.info("Creating user settings.")
         settings = UserSettings(user_id=new_user.id)
         new_user.settings = settings
         self.db.add(settings)
         await self.db.flush()
+
+        logging.info("Starting session via DBSessionManager.")
 
         access_token, refresh_token, session = await self._start_session(
             new_user.id, device, device, ip
