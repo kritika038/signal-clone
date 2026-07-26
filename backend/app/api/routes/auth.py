@@ -88,7 +88,8 @@ async def send_register_otp(
         await service.send_register_otp(send_in.phone, ip, user_agent)
         return {
             "success": True,
-            "message": "Verification code sent."
+            "message": "Verification code sent.",
+            "demo_otp": "123456"
         }
     except ValueError as e:
         raise APIException(status.HTTP_400_BAD_REQUEST, "OTP_SEND_FAILED", str(e))
@@ -155,7 +156,8 @@ async def send_login_otp(
         await service.send_login_otp(send_in.login_id, ip, user_agent)
         return {
             "success": True,
-            "message": "Verification code sent."
+            "message": "Verification code sent.",
+            "demo_otp": "123456"
         }
     except ValueError as e:
         raise APIException(status.HTTP_400_BAD_REQUEST, "LOGIN_OTP_SEND_FAILED", str(e))

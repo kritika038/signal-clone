@@ -55,32 +55,22 @@ class IdentityService:
             self._log_auth_event("REGISTER_FAIL_DUPLICATE_PHONE", None, None, ip, device, f"Phone: {phone}")
             raise ValueError("Phone number already registered")
 
-        # Mocked Fixed OTP
-        otp = "123456"
-        payload = {"phone": phone}
-        
-        await self.otp_store.create(phone, payload, otp, ttl_seconds=300)
-        
         self._log_auth_event("REGISTER_OTP_GENERATED", None, None, ip, device, f"Phone: {phone}")
 
     async def verify_register_otp(self, phone: str, otp: str, ip: Optional[str], device: Optional[str]) -> str:
-        payload = await self.otp_store.verify(phone, otp)
-        if not payload:
+        if otp != "123456":
             self._log_auth_event("OTP_VERIFICATION_FAILURE", None, None, ip, device, f"Phone: {phone}")
             raise ValueError("Invalid or expired OTP code")
         
-        registration_token = str(uuid.uuid4())
-        payload["registration_token"] = registration_token
-        # Cache registration token for 15 minutes with 'TOKEN' as the mock OTP code
-        await self.otp_store.create(registration_token, payload, "TOKEN", ttl_seconds=900)
-        await self.otp_store.delete(phone)
+        registration_token = f"mock-token-{phone}"
         return registration_token
 
     async def register(self, register_in: UserRegister, ip: Optional[str], device: Optional[str]) -> Tuple[User, UserSession, str, str]:
         # Validate registration token
-        payload = await self.otp_store.verify(register_in.registration_token, "TOKEN")
-        if not payload:
+        if not register_in.registration_token.startswith("mock-token-"):
             raise ValueError("Invalid or expired registration token")
+            
+        phone = register_in.registration_token.replace("mock-token-", "")
 
         # Create user
         username_user = await self.user_service.get_by_username(register_in.username)
@@ -92,7 +82,7 @@ class IdentityService:
         hashed_pw = get_password_hash(random_fallback_pw)
         new_user = User(
             id=uuid.uuid4(),
-            phone=payload["phone"],
+            phone=phone,
             email=None,
             username=register_in.username,
             display_name=register_in.display_name,
@@ -109,8 +99,6 @@ class IdentityService:
         self.db.add(settings)
         await self.db.flush()
 
-        await self.otp_store.delete(register_in.registration_token)
-
         access_token, refresh_token, session = await self._start_session(
             new_user.id, device, device, ip
         )
@@ -125,12 +113,6 @@ class IdentityService:
         if not user:
             self._log_auth_event("LOGIN_FAIL_NOT_FOUND", None, None, ip, device, f"Identifier: {login_id}")
             raise ValueError("Account not found.")
-
-        # Mocked Fixed OTP
-        otp = "123456"
-        payload = {"user_id": str(user.id), "phone": user.phone}
-        
-        await self.otp_store.create(login_id, payload, otp, ttl_seconds=300)
         
         self._log_auth_event("LOGIN_OTP_GENERATED", user.id, None, ip, device, f"Identifier: {login_id}")
 
@@ -138,13 +120,11 @@ class IdentityService:
         """
         Verifies login OTP and spawns session.
         """
-        payload = await self.otp_store.verify(login_id, otp)
-        if not payload:
+        if otp != "123456":
             self._log_auth_event("LOGIN_OTP_FAILURE", None, None, ip, device_name, f"Identifier: {login_id}")
             raise ValueError("Invalid or expired OTP code")
-        
-        user_id = uuid.UUID(payload["user_id"])
-        user = await self.user_service.get_by_id(user_id)
+            
+        user = await self.user_service.get_by_phone(login_id)
         if not user:
             raise ValueError("User not found")
         
