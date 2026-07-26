@@ -197,6 +197,14 @@ class Settings(BaseSettings):
                     "http://localhost:3000",
                     "http://127.0.0.1:3000",
                 ]
+
+        if self.REDIS_BACKEND == RedisBackend.REDIS and not self.REDIS_URL:
+            import logging
+            logging.getLogger("uvicorn.error").warning(
+                "REDIS_URL is not configured. Falling back to in-memory implementation for Redis services."
+            )
+            self.REDIS_BACKEND = RedisBackend.MEMORY
+
         return self
 
     def storage_local_path_resolved(self) -> Path:
