@@ -16,6 +16,7 @@ import {
   Settings,
   Trash2,
   Copy,
+  LogOut,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
