@@ -1,7 +1,7 @@
 import { useState, useDeferredValue } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, UserPlus, MessageSquare, X } from "lucide-react";
+import { Search, UserPlus, MessageSquare, X, Users } from "lucide-react";
 
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
@@ -14,9 +14,10 @@ import { apiRequest } from "@/services/api";
 interface NewChatModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onNewGroup?: () => void;
 }
 
-export function NewChatModal({ isOpen, onClose }: NewChatModalProps) {
+export function NewChatModal({ isOpen, onClose, onNewGroup }: NewChatModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const { accessToken, user } = useSessionStore();
@@ -94,6 +95,17 @@ export function NewChatModal({ isOpen, onClose }: NewChatModalProps) {
                   autoFocus
                 />
               </div>
+              {!deferredSearch && (
+                <button
+                  onClick={onNewGroup}
+                  className="mt-4 flex w-full items-center gap-3 rounded-lg p-2 hover:bg-neutral-800 transition-colors"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800 border border-neutral-700">
+                    <Users className="w-5 h-5 text-neutral-300" />
+                  </div>
+                  <span className="text-sm font-medium text-neutral-200">New Group</span>
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-2">

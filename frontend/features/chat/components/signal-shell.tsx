@@ -38,6 +38,7 @@ import {
   uploadMedia,
 } from "@/services/chat";
 import { NewChatModal } from "./new-chat-modal";
+import { CreateGroupModal } from "./create-group-modal";
 import { socketService } from "@/services/socket";
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
@@ -672,36 +673,8 @@ export function SignalShell() {
 
       {/* Settings Overlay & Modals */}
       <SettingsPanel />
-      <NewChatModal isOpen={showNewChat} onClose={() => setShowNewChat(false)} />
-
-      <AnimatePresence>
-        {showNewGroup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm rounded-xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl"
-            >
-              <h3 className="mb-1 text-lg font-semibold text-neutral-100">Create New Group</h3>
-              <p className="mb-5 text-sm text-neutral-500">Enter a name for the new group chat.</p>
-              <Input
-                className="mb-4 bg-neutral-950 border-neutral-800"
-                placeholder="Group name"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                autoFocus
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" className="text-neutral-300 hover:text-white" onClick={() => setShowNewGroup(false)}>Cancel</Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => createGroupMutation.mutate()} disabled={!groupName.trim() || createGroupMutation.isPending}>
-                  Create
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <NewChatModal isOpen={showNewChat} onClose={() => setShowNewChat(false)} onNewGroup={() => { setShowNewChat(false); setShowNewGroup(true); }} />
+      <CreateGroupModal isOpen={showNewGroup} onClose={() => setShowNewGroup(false)} />
 
       <input
         ref={fileInputRef}
