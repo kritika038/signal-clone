@@ -34,8 +34,8 @@ class SMTPEmailProvider(EmailProvider):
             )
             logger.info(f"[SMTP] Successfully sent email to {to_email}. Response: {response}")
         except Exception as e:
-            logger.error(f"[SMTP] Failed to send email to {to_email}. Exception: {str(e)}")
-            raise ValueError("Unable to send verification email. Please try again later.")
+            logger.exception(f"[SMTP] Failed to send email to {to_email}.")
+            raise ValueError(f"SMTP Error: {type(e).__name__} - {str(e)}")
 
 class ResendEmailProvider(EmailProvider):
     async def send_email(self, to_email: str, subject: str, content: str) -> None:
@@ -60,8 +60,8 @@ class ResendEmailProvider(EmailProvider):
                 response.raise_for_status()
                 logger.info(f"[Resend] Successfully sent email to {to_email}.")
             except Exception as e:
-                logger.error(f"[Resend] Failed to send email to {to_email}. Exception: {str(e)}")
-                raise ValueError("Unable to send verification email. Please try again later.")
+                logger.exception(f"[Resend] Failed to send email to {to_email}.")
+                raise ValueError(f"Resend Error: {type(e).__name__} - {str(e)}")
 
 class MailtrapEmailProvider(EmailProvider):
     async def send_email(self, to_email: str, subject: str, content: str) -> None:
@@ -86,8 +86,8 @@ class MailtrapEmailProvider(EmailProvider):
                 response.raise_for_status()
                 logger.info(f"[Mailtrap] Successfully sent email to {to_email}.")
             except Exception as e:
-                logger.error(f"[Mailtrap] Failed to send email to {to_email}. Exception: {str(e)}")
-                raise ValueError("Unable to send verification email. Please try again later.")
+                logger.exception(f"[Mailtrap] Failed to send email to {to_email}.")
+                raise ValueError(f"Mailtrap Error: {type(e).__name__} - {str(e)}")
 
 
 class EmailService:
@@ -104,14 +104,6 @@ class EmailService:
         """
         Sends an email containing the 6-digit OTP using the configured provider.
         """
-        logger.warning(
-            f"\n{'='*50}\n"
-            f"GENERATED OTP (Fallback Log):\n"
-            f"To: {to_email}\n"
-            f"OTP Code: {otp}\n"
-            f"{'='*50}"
-        )
-
         subject = "Your Signal Clone Verification Code"
         content = (
             f"Hello,\n\n"
