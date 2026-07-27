@@ -8,6 +8,7 @@ class RegisterSendOTP(BaseModel):
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
+        v = re.sub(r'\s+', '', v)
         pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
         if not pattern.match(v):
             raise ValueError("Phone number must comply with E.164 standard formatting (e.g. +12025550101)")
@@ -20,6 +21,7 @@ class RegisterVerifyOTP(BaseModel):
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
+        v = re.sub(r'\s+', '', v)
         pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
         if not pattern.match(v):
             raise ValueError("Phone number must comply with E.164 standard formatting")
@@ -35,6 +37,7 @@ class UserRegister(BaseModel):
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
+        v = re.sub(r'\s+', '', v)
         pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
         if not pattern.match(v):
             raise ValueError("Phone number must comply with E.164 standard formatting (e.g. +12025550101)")
@@ -50,9 +53,27 @@ class UserRegister(BaseModel):
 class LoginSendOTP(BaseModel):
     login_id: str = Field(..., description="Phone number (E.164)", examples=["+12025550101"])
 
+    @field_validator("login_id")
+    @classmethod
+    def validate_login_id(cls, v: str) -> str:
+        v = re.sub(r'\s+', '', v)
+        pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
+        if not pattern.match(v):
+            raise ValueError("Phone number must comply with E.164 standard formatting (e.g. +12025550101)")
+        return v
+
 class LoginVerifyOTP(BaseModel):
     login_id: str = Field(..., description="Phone number (E.164)", examples=["+12025550101"])
     otp: str = Field(..., min_length=6, max_length=6, examples=["123456"])
+
+    @field_validator("login_id")
+    @classmethod
+    def validate_login_id(cls, v: str) -> str:
+        v = re.sub(r'\s+', '', v)
+        pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
+        if not pattern.match(v):
+            raise ValueError("Phone number must comply with E.164 standard formatting (e.g. +12025550101)")
+        return v
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str

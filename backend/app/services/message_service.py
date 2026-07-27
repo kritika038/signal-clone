@@ -272,7 +272,9 @@ class MessageService:
         updated = await self.msg_repo.edit_message(message_id, sanitized)
         if not updated:
             raise ValueError("Failed to edit message")
-        return updated
+        
+        detailed = await self.msg_repo.get_message_detail(message_id)
+        return detailed or updated
 
     async def delete_for_everyone(self, message_id: uuid.UUID, sender_id: uuid.UUID) -> Message:
         """
@@ -288,7 +290,9 @@ class MessageService:
         msg.deleted_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(msg)
-        return msg
+        
+        detailed = await self.msg_repo.get_message_detail(message_id)
+        return detailed or msg
 
     async def delete_for_me(self, message_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """

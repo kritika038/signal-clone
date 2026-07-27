@@ -16,7 +16,7 @@ from app.models.conversation_member import ConversationMember
 from app.models.enums import MessageType
 from app.models.message import Message
 from app.models.user import User
-from app.repositories.message import MessageRepository
+from app.repositories.message_repository import MessageRepository
 from app.services.message_service import MessageService
 
 router = APIRouter(tags=["Messages"])
@@ -65,7 +65,7 @@ async def list_conversation_messages(
     return {"success": True, "data": [format_message(message) for message in messages]}
 
 
-@router.post("/conversations/{id}/messages", response_model=dict[str, Any], status_code=status.HTTP_200_OK)
+@router.post("/conversations/{id}/messages", response_model=dict[str, Any], status_code=status.HTTP_201_CREATED)
 async def create_message(
     id: uuid.UUID,
     payload: MessageCreatePayload,
@@ -102,11 +102,12 @@ async def edit_message(
 ):
     try:
         message = await MessageService(db).edit_user_message(id, current_user.id, payload.content)
+        detailed = await MessageRepository(db).get_message_detail(message.id)
     except ValueError as exc:
         raise APIException(status.HTTP_404_NOT_FOUND, "MESSAGE_NOT_FOUND", str(exc))
     except PermissionError as exc:
         raise APIException(status.HTTP_403_FORBIDDEN, "FORBIDDEN", str(exc))
-    return {"success": True, "data": format_message(message)}
+    return {"success": True, "data": format_message(detailed or message)}
 
 
 @router.delete("/messages/{id}", response_model=dict[str, Any])
@@ -121,7 +122,8 @@ async def delete_message(
             await MessageService(db).delete_for_me(id, current_user.id)
             return {"success": True, "data": {"deleted": True, "scope": "me", "id": str(id)}}
         message = await MessageService(db).delete_for_everyone(id, current_user.id)
-        return {"success": True, "data": format_message(message)}
+        detailed = await MessageRepository(db).get_message_detail(message.id)
+        return {"success": True, "data": format_message(detailed or message)}
     except ValueError as exc:
         raise APIException(status.HTTP_404_NOT_FOUND, "MESSAGE_NOT_FOUND", str(exc))
     except PermissionError as exc:

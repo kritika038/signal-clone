@@ -35,6 +35,13 @@ def format_contact(contact: Contact) -> dict[str, Any]:
 
 
 def format_message(message: Message) -> dict[str, Any]:
+    from sqlalchemy.orm.attributes import instance_state
+    
+    state = instance_state(message)
+    attachments_loaded = "attachments" in state.dict
+    reactions_loaded = "reactions" in state.dict
+    receipts_loaded = "receipts" in state.dict
+
     return {
         "id": str(message.id),
         "conversation_id": str(message.conversation_id),
@@ -66,8 +73,8 @@ def format_message(message: Message) -> dict[str, Any]:
                 "thumbnail_url": attachment.thumbnail_url,
                 "checksum": attachment.checksum,
             }
-            for attachment in getattr(message, "attachments", [])
-        ],
+            for attachment in message.attachments
+        ] if attachments_loaded and message.attachments else [],
         "reactions": [
             {
                 "id": str(reaction.id),
@@ -75,8 +82,8 @@ def format_message(message: Message) -> dict[str, Any]:
                 "reaction": reaction.reaction,
                 "unicode": reaction.unicode,
             }
-            for reaction in getattr(message, "reactions", [])
-        ],
+            for reaction in message.reactions
+        ] if reactions_loaded and message.reactions else [],
         "receipts": [
             {
                 "id": str(receipt.id),
@@ -84,8 +91,8 @@ def format_message(message: Message) -> dict[str, Any]:
                 "status": receipt.status.value if receipt.status else None,
                 "updated_at": receipt.updated_at.isoformat(),
             }
-            for receipt in getattr(message, "receipts", [])
-        ],
+            for receipt in message.receipts
+        ] if receipts_loaded and message.receipts else [],
     }
 
 
