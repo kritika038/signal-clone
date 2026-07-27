@@ -31,19 +31,19 @@ You can test the application live without installing it locally:
 
 ## 📖 Table of Contents
 
-- [Project Overview](#-project-overview)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Screenshots](#-screenshots)
-- [Architecture](#-architecture)
-- [Folder Structure](#-folder-structure)
-- [Database Schema](#-database-schema)
-- [Real-Time Events](#-real-time-events)
-- [Security, Performance & Scalability](#-security-performance--scalability)
-- [Installation & Local Setup](#-installation--local-setup)
-- [API Documentation](#-api-documentation)
-- [Assignment Mapping](#-assignment-mapping)
-- [Final Notes](#-final-notes)
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Folder Structure](#folder-structure)
+- [Database Schema](#database-schema)
+- [Real-Time Events](#real-time-events)
+- [Security, Performance & Scalability](#security-performance--scalability)
+- [Installation & Local Setup](#installation--local-setup)
+- [API Documentation](#api-documentation)
+- [Assignment Mapping](#assignment-mapping)
+- [Final Notes](#final-notes)
 
 ---
 
