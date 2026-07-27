@@ -12,7 +12,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)](https://jwt.io/)
 
-**[Live Application (Vercel)](https://signal-clone-hzmyyx7qq-kritikas-projects-85137cfb.vercel.app/)** • **[Live API (Render)](https://signal-clone-backend-xja6.onrender.com)** • **[GitHub Repository](https://github.com/kritika038/signal-clone)**
+**[Live Application (Vercel)](https://signal-clone-r4hxsfh8u-kritikas-projects-85137cfb.vercel.app/)** • **[Live API (Render)](https://signal-clone-backend-xja6.onrender.com)** • **[GitHub Repository](https://github.com/kritika038/signal-clone)**
 
 </div>
 
