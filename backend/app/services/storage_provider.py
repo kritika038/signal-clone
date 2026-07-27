@@ -83,7 +83,7 @@ class LocalStorageProvider(StorageProvider):
         storage_key = f"{uuid.uuid4().hex}{Path(filename).suffix}"
         path = self.upload_dir / storage_key
         path.write_bytes(file_bytes)
-        logger.info("uploads.local.saved", extra={"storage_key": storage_key, "filename": filename})
+        logger.info("uploads.local.saved", extra={"storage_key": storage_key, "original_filename": filename})
         return self.build_result(storage_key, filename, mime_type, file_bytes)
 
     async def delete_file(self, storage_key: str) -> bool:
