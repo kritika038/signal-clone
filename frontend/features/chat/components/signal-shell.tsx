@@ -258,7 +258,7 @@ export function SignalShell() {
             )
           : [];
       return sendMessage(accessToken, activeConversationId, {
-        content: payload.content || null,
+        content: payload.content || null, message_type: payload.attachments.length > 0 ? "image" : "text",
         reply_to_id: payload.replyToId,
         attachments: uploadedAttachments,
         client_message_id: payload.clientMessageId,
@@ -274,7 +274,8 @@ export function SignalShell() {
         conversation_id: activeConversationId,
         sender_id: currentUserId,
         content: payload.content || null,
-        message_type: "text",
+        message_type: payload.attachments.length > 0 ? "image" : "text",
+
         reply_to_id: payload.replyToId,
         is_outgoing: true,
         is_system: false,
