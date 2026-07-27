@@ -2,6 +2,7 @@ import { useState, useDeferredValue } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Search, Check, X, Loader2, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
@@ -46,8 +47,10 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       selectConversation(data.id);
       handleClose();
+      toast.success("Group Created");
     },
     onError: (error: any) => {
+      toast.error(error.message || "Failed to create group");
       setFeatureNotice(error.message || "Failed to create group");
     },
   });

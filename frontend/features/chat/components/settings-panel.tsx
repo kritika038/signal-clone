@@ -6,6 +6,7 @@ import { Laptop, MoonStar, Palette, Shield, Bell, HardDrive, Link2, PlayCircle, 
 import { startTransition, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,10 @@ export function SettingsPanel() {
 
   const profileMutation = useMutation({
     mutationFn: (values: z.infer<typeof schema>) => updateProfile(accessToken!, values),
-    onSuccess: (updated) => updateUser(updated),
+    onSuccess: (updated) => {
+      updateUser(updated);
+      toast.success("Profile Updated");
+    },
   });
   const contactsQuery = useQuery({
     queryKey: ["contacts", accessToken],

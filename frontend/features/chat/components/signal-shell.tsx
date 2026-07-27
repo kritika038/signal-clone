@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -312,6 +313,7 @@ export function SignalShell() {
           return { ...old, pages: newPages };
         });
       }
+      toast.error("Message or upload failed");
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -366,8 +368,13 @@ export function SignalShell() {
       return;
     }
     const socket = socketService.connect(accessToken);
-    const handleConnect = () => setSocketState(true, null);
-    const handleDisconnect = () => setSocketState(false, "Reconnecting to Signal service…");
+    const handleConnect = () => {
+      setSocketState(true, null);
+    };
+    const handleDisconnect = () => {
+      setSocketState(false, "Reconnecting to Signal service…");
+      toast.warning("Connection Lost");
+    };
     const handleIncomingChange = async (data?: any) => {
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
       if (activeConversationId) {

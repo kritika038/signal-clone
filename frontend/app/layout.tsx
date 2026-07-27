@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "Signal-inspired messaging workspace built with Next.js and FastAPI.",
 };
 
+import { Toaster } from "sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,6 +21,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <Providers>
           <SessionRestorer>{children}</SessionRestorer>
+          <Toaster richColors position="bottom-center" />
         </Providers>
       </body>
     </html>

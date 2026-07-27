@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, UserPlus, Phone, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
@@ -71,11 +72,13 @@ export function NewContactModal({ isOpen, onClose }: NewContactModalProps) {
     onSuccess: (conversationId) => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      toast.success("Contact Added");
       setFeatureNotice("Contact added successfully");
       selectConversation(conversationId);
       handleClose();
     },
     onError: (error: Error) => {
+      toast.error(error.message || "Failed to add contact");
       setFeatureNotice(error.message || "Failed to add contact");
     },
   });
