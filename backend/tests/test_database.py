@@ -162,14 +162,14 @@ async def test_group_conversation_creation_and_member_add(db_session: AsyncSessi
     assert group.type == ConversationType.GROUP
     assert group.name == "Team Signal"
     
-    # Verify creator is Owner
+    # Verify creator is Admin
     owner_query = select(ConversationMember).where(
         ConversationMember.conversation_id == group.id,
         ConversationMember.user_id == creator.id
     )
     owner_res = await db_session.execute(owner_query)
     owner = owner_res.scalar_one()
-    assert owner.role == ConversationRole.OWNER
+    assert owner.role == ConversationRole.ADMIN
 
     # Remove member
     removed = await group_repo.remove_member(group.id, m1.id)

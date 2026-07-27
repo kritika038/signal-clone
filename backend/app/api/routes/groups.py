@@ -64,7 +64,7 @@ async def _get_group(db: AsyncSession, group_id: uuid.UUID, user_id: uuid.UUID) 
 
 async def _ensure_admin(group: Conversation, user_id: uuid.UUID) -> None:
     actor = next((member for member in group.members if member.user_id == user_id and member.left_at is None), None)
-    if not actor or actor.role not in {ConversationRole.OWNER, ConversationRole.ADMIN}:
+    if not actor or actor.role not in {ConversationRole.ADMIN, ConversationRole.OWNER}:
         raise APIException(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Admin privileges required")
 
 
@@ -127,6 +127,18 @@ async def update_group(
     group.updated_at = datetime.now(timezone.utc)
     await db.commit()
     group = await _get_group(db, id, current_user.id)
+    
+    # Broadcast to room
+    try:
+        from app.websocket.manager import sio
+        from app.websocket.rooms import get_conversation_room
+        formatted_group = format_conversation(group)
+        room = get_conversation_room(id)
+        # Using a background task or await if inside an async context? This is async.
+        await sio.emit("group.updated", formatted_group, to=room)
+    except Exception as e:
+        pass
+
     return {"success": True, "data": format_conversation(group)}
 
 
@@ -149,16 +161,26 @@ async def add_group_member(
         )
     except Exception:
         pass
-    return {
+        
+    payload_response = {
+        "id": str(member.id),
+        "conversation_id": str(member.conversation_id),
+        "user_id": str(member.user_id),
+        "role": member.role.value if member.role else None,
+        "left_at": member.left_at.isoformat() if member.left_at else None,
+    }
 
+    try:
+        from app.websocket.manager import sio
+        from app.websocket.rooms import get_conversation_room
+        room = get_conversation_room(id)
+        await sio.emit("group.member_added", payload_response, to=room)
+    except Exception:
+        pass
+
+    return {
         "success": True,
-        "data": {
-            "id": str(member.id),
-            "conversation_id": str(member.conversation_id),
-            "user_id": str(member.user_id),
-            "role": member.role.value if member.role else None,
-            "left_at": member.left_at.isoformat() if member.left_at else None,
-        },
+        "data": payload_response,
     }
 
 
@@ -175,6 +197,15 @@ async def remove_group_member(
     if not removed:
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
     await db.commit()
+    
+    try:
+        from app.websocket.manager import sio
+        from app.websocket.rooms import get_conversation_room
+        room = get_conversation_room(id)
+        await sio.emit("group.member_removed", {"conversation_id": str(id), "member_id": str(member_id)}, to=room)
+    except Exception:
+        pass
+
     return {"success": True, "data": {"removed": True, "conversation_id": str(id), "member_id": str(member_id)}}
 
 
@@ -200,6 +231,15 @@ async def update_group_member_role(
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
         
     await db.commit()
+    
+    try:
+        from app.websocket.manager import sio
+        from app.websocket.rooms import get_conversation_room
+        room = get_conversation_room(id)
+        await sio.emit("group.member_updated", {"conversation_id": str(id), "member_id": str(member_id), "role": payload.role.value}, to=room)
+    except Exception:
+        pass
+        
     return {"success": True, "data": {"updated": True, "conversation_id": str(id), "member_id": str(member_id), "role": payload.role.value}}
 
 
@@ -215,4 +255,13 @@ async def leave_group(
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
     
     await db.commit()
+    
+    try:
+        from app.websocket.manager import sio
+        from app.websocket.rooms import get_conversation_room
+        room = get_conversation_room(id)
+        await sio.emit("group.member_left", {"conversation_id": str(id), "member_id": str(current_user.id)}, to=room)
+    except Exception:
+        pass
+        
     return {"success": True, "data": {"left": True, "conversation_id": str(id)}}

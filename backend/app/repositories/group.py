@@ -31,11 +31,11 @@ class GroupRepository(BaseRepository[Conversation]):
         self.db.add(group)
         await self.db.flush()
 
-        # Add creator as OWNER
+        # Add creator as ADMIN
         owner_member = ConversationMember(
             conversation_id=group.id,
             user_id=creator_id,
-            role=ConversationRole.OWNER
+            role=ConversationRole.ADMIN
         )
         self.db.add(owner_member)
         self.db.add(ConversationPreference(conversation_id=group.id, user_id=creator_id))
@@ -129,19 +129,31 @@ class GroupRepository(BaseRepository[Conversation]):
         if member:
             member.left_at = datetime.now(timezone.utc)
             
-            # Transfer ownership if they were the owner
-            if member.role == ConversationRole.OWNER:
-                other_members_query = select(ConversationMember).where(
+            # Transfer ownership if they were an ADMIN and they are the last ADMIN
+            if member.role == ConversationRole.ADMIN:
+                # Check if there are any other admins left
+                other_admins_query = select(ConversationMember).where(
                     and_(
                         ConversationMember.conversation_id == conversation_id,
                         ConversationMember.user_id != user_id,
-                        ConversationMember.left_at.is_(None)
+                        ConversationMember.left_at.is_(None),
+                        ConversationMember.role == ConversationRole.ADMIN
                     )
-                ).order_by(ConversationMember.joined_at.asc())
-                other_res = await self.db.execute(other_members_query)
-                next_owner = other_res.scalars().first()
-                if next_owner:
-                    next_owner.role = ConversationRole.OWNER
+                )
+                other_admins_res = await self.db.execute(other_admins_query)
+                if not other_admins_res.scalars().first():
+                    # No other admins left, promote the oldest member
+                    other_members_query = select(ConversationMember).where(
+                        and_(
+                            ConversationMember.conversation_id == conversation_id,
+                            ConversationMember.user_id != user_id,
+                            ConversationMember.left_at.is_(None)
+                        )
+                    ).order_by(ConversationMember.joined_at.asc())
+                    other_res = await self.db.execute(other_members_query)
+                    next_owner = other_res.scalars().first()
+                    if next_owner:
+                        next_owner.role = ConversationRole.ADMIN
                     
             await self.db.flush()
             return True

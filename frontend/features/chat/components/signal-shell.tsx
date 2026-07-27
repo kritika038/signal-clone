@@ -398,6 +398,13 @@ export function SignalShell() {
       }
     };
 
+    const handleGroupChange = (data: { conversation_id: string }) => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      if (data.conversation_id) {
+        queryClient.invalidateQueries({ queryKey: ["conversation", data.conversation_id] });
+      }
+    };
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("message.received", handleIncomingChange);
@@ -407,6 +414,11 @@ export function SignalShell() {
     socket.on("message.read", handleIncomingChange);
     socket.on("typing.start", handleTypingStart);
     socket.on("typing.stop", handleTypingStop);
+    socket.on("group.updated", handleGroupChange);
+    socket.on("group.member_added", handleGroupChange);
+    socket.on("group.member_removed", handleGroupChange);
+    socket.on("group.member_left", handleGroupChange);
+    socket.on("group.member_updated", handleGroupChange);
     socket.emit("heartbeat");
     const heartbeatInterval = setInterval(() => {
       socket.emit("heartbeat");
@@ -425,6 +437,11 @@ export function SignalShell() {
       socket.off("message.read", handleIncomingChange);
       socket.off("typing.start", handleTypingStart);
       socket.off("typing.stop", handleTypingStop);
+      socket.off("group.updated", handleGroupChange);
+      socket.off("group.member_added", handleGroupChange);
+      socket.off("group.member_removed", handleGroupChange);
+      socket.off("group.member_left", handleGroupChange);
+      socket.off("group.member_updated", handleGroupChange);
       clearInterval(heartbeatInterval);
     };
   }, [accessToken, activeConversationId, currentUserId, queryClient, setSocketState]);

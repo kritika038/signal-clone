@@ -224,11 +224,11 @@ async def seed_data(db: Optional[AsyncSession] = None):
             db.add(conv)
             group_convs.append(conv)
 
-            # Add creator as OWNER
+            # Add creator as ADMIN
             owner_m = ConversationMember(
                 conversation_id=conv.id,
                 user_id=creator.id,
-                role=ConversationRole.OWNER
+                role=ConversationRole.ADMIN
             )
             db.add(owner_m)
             db.add(ConversationPreference(conversation_id=conv.id, user_id=creator.id))

@@ -7,6 +7,7 @@ import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { fetchContacts } from "@/services/contacts";
 import { updateGroup, addGroupMember, removeGroupMember, fetchConversation, updateGroupMemberRole, uploadMedia, leaveGroup } from "@/services/chat";
 
@@ -319,14 +320,14 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-neutral-500">@{member.user?.username}</span>
                                 {(member.role === "ADMIN" || member.role === "OWNER") && (
-                                  <span className="flex items-center text-[10px] uppercase font-bold text-signal-blue-400 bg-signal-blue-500/10 px-1.5 py-0.5 rounded">
-                                    <Shield className="w-3 h-3 mr-1" /> ADMIN
-                                  </span>
+                                  <Badge className="text-[10px] h-5 bg-signal-blue-500/10 text-signal-blue-500 hover:bg-signal-blue-500/20 border-none">
+                                    ADMIN
+                                  </Badge>
                                 )}
                               </div>
                             </div>
                           </div>
-                          {isAdmin && !isMe && member.role !== "OWNER" && (
+                          {isAdmin && !isMe && member.role !== "ADMIN" && member.role !== "OWNER" && (
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                               {member.role === "MEMBER" ? (
                                 <Button
