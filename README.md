@@ -113,30 +113,28 @@ This project was built to address the complexities of modern real-time communica
 
 ## 📸 Screenshots
 
-*(Placeholders for project screenshots)*
-
 <details>
 <summary><b>Authentication & Registration</b></summary>
 <br>
-<img src="./docs/images/auth-screen.png" alt="Authentication Screen" width="800">
+<img src="docs/images/auth-screen.png" alt="Authentication Screen" width="800">
 </details>
 
 <details>
 <summary><b>Conversation List & Main Layout</b></summary>
 <br>
-<img src="./docs/images/main-layout.png" alt="Main Layout" width="800">
+<img src="docs/images/main-layout.png" alt="Main Layout" width="800">
 </details>
 
 <details>
 <summary><b>Real-Time Chat & Emoji</b></summary>
 <br>
-<img src="./docs/images/chat-screen.png" alt="Chat Screen" width="800">
+<img src="docs/images/chat-screen.png" alt="Chat Screen" width="800">
 </details>
 
 <details>
 <summary><b>Group Management</b></summary>
 <br>
-<img src="./docs/images/group-management.png" alt="Group Management" width="800">
+<img src="docs/images/group-management.png" alt="Group Management" width="800">
 </details>
 
 ---
