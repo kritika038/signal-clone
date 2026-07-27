@@ -22,6 +22,9 @@ import {
   Users,
   Paperclip,
   Phone,
+  Check,
+  CheckCheck,
+  Clock,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -202,11 +205,8 @@ export function SignalShell() {
     return () => observer.disconnect();
   }, [messagesQuery.hasNextPage, messagesQuery.isFetchingNextPage, messagesQuery.fetchNextPage]);
 
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messagesQuery.data?.pages[0]]);
+  // Auto-scroll is automatically handled natively by flex-col-reverse for incoming messages,
+  // because the viewport anchors to the bottom. No auto-scroll effects needed.
 
   const searchQueryResult = useQuery({
     queryKey: ["search", deferredSearch, accessToken],
@@ -215,9 +215,25 @@ export function SignalShell() {
   });
 
   const mappedMessages = useMemo(() => {
-    const allMessages = messagesQuery.data?.pages.flat() || [];
-    return [...allMessages].reverse().map((message) => mapApiMessage(message, currentUserId));
+    if (!messagesQuery.data) return [];
+    const reverseChronological = messagesQuery.data.pages.map((page) => [...page].reverse()).flat();
+    return reverseChronological.map((message) => mapApiMessage(message, currentUserId));
   }, [messagesQuery.data, currentUserId]);
+
+  useEffect(() => {
+    if (!messagesQuery.data || !activeConversationId) return;
+    const socket = socketService.getSocket();
+    if (!socket) return;
+    const allMessages = messagesQuery.data.pages.flat();
+    const unreadMessages = allMessages.filter(
+      (m: any) => m.sender_id !== currentUserId && !m.receipts?.some((r: any) => r.user_id === currentUserId && r.status === "READ")
+    );
+    if (unreadMessages.length > 0) {
+      unreadMessages.forEach((m: any) => {
+        socket.emit("message.read", { message_id: m.id || m.message_id });
+      });
+    }
+  }, [messagesQuery.data, activeConversationId, currentUserId]);
 
   const replyMessage = mappedMessages.find((message) => message.id === replyToMessageId) || null;
   const searchResults = useMemo(() => {
@@ -228,7 +244,7 @@ export function SignalShell() {
   }, [currentUserId, deferredSearch, searchQueryResult.data]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (payload: { content: string; attachments: typeof queuedAttachments; replyToId: string | null }) => {
+    mutationFn: async (payload: { content: string; attachments: typeof queuedAttachments; replyToId: string | null; clientMessageId: string }) => {
       if (!accessToken || !activeConversationId) {
         throw new Error("No active conversation selected");
       }
@@ -244,6 +260,7 @@ export function SignalShell() {
         content: payload.content || null,
         reply_to_id: payload.replyToId,
         attachments: uploadedAttachments,
+        client_message_id: payload.clientMessageId,
       });
     },
     onMutate: async (payload) => {
@@ -251,7 +268,8 @@ export function SignalShell() {
       const previousMessages = queryClient.getQueryData(["messages", activeConversationId]);
       
       const optimisticMessage = {
-        id: crypto.randomUUID(),
+        id: payload.clientMessageId,
+        client_message_id: payload.clientMessageId,
         conversation_id: activeConversationId,
         sender_id: currentUserId,
         content: payload.content || null,
@@ -265,6 +283,7 @@ export function SignalShell() {
         attachments: [],
         reactions: [],
         receipts: [],
+        status: "sending",
       };
 
       queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
@@ -353,18 +372,15 @@ export function SignalShell() {
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
       if (activeConversationId) {
         await queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
-        
-        // If this is a new message and it belongs to the active conversation, mark it read
-        if (data && data.message_id || data?.id) {
-          const msgId = data.message_id || data.id;
-          if (data.conversation_id === activeConversationId && data.sender_id !== currentUserId) {
-            socket.emit("message.read", { message_id: msgId });
-          }
-        }
-      } else if (data && (data.message_id || data.id) && data.sender_id !== currentUserId) {
-        // If it's a background message, mark it delivered
+      }
+      
+      if (data && (data.message_id || data.id) && data.sender_id !== currentUserId) {
         const msgId = data.message_id || data.id;
-        socket.emit("message.delivered", { message_id: msgId });
+        if (data.conversation_id === activeConversationId) {
+          socket.emit("message.read", { message_id: msgId });
+        } else {
+          socket.emit("message.delivered", { message_id: msgId });
+        }
       }
     };
     const handleTypingStart = (data: { user_id: string; conversation_id: string }) => {
@@ -608,7 +624,7 @@ export function SignalShell() {
                   <h2 className="text-[15px] font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-100">{activeConversation?.title}</h2>
                   <p className="text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
                     {typingUsers.size > 0 ? (
-                      <span className="text-blue-400">typing...</span>
+                      <span className="text-blue-400">Typing...</span>
                     ) : conversationDetailQuery.data?.type === "GROUP" ? (
                       `${conversationDetailQuery.data.members.length} members`
                     ) : (
@@ -634,10 +650,9 @@ export function SignalShell() {
             </header>
 
             {/* Chat History */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="mx-auto max-w-3xl space-y-2">
-                <div ref={loadMoreRef} className="h-4 w-full" />
-                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 py-2">Loading older messages...</div>}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
+              <div className="mx-auto w-full max-w-3xl flex flex-col-reverse space-y-2 space-y-reverse">
+                <div ref={messagesEndRef} className="h-1 shrink-0" />
                 {messagesQuery.isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
@@ -649,24 +664,13 @@ export function SignalShell() {
                     const quoted = message.quotedMessageId
                       ? mappedMessages.find((c) => c.id === message.quotedMessageId)
                       : null;
-                    const showDay =
-                      index === 0 ||
-                      new Date(mappedMessages[index - 1]!.timestamp).toDateString() !==
+                    const isOldestOfDay =
+                      index === mappedMessages.length - 1 ||
+                      new Date(mappedMessages[index + 1]!.timestamp).toDateString() !==
                         new Date(message.timestamp).toDateString();
 
                     return (
-                      <div key={message.id}>
-                        {showDay && (
-                          <div className="my-4 flex justify-center">
-                            <span className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 backdrop-blur-sm">
-                              {new Date(message.timestamp).toLocaleDateString(undefined, {
-                                weekday: "long",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </span>
-                          </div>
-                        )}
+                      <div key={message.id} className="flex flex-col-reverse">
                         <motion.div
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -693,8 +697,12 @@ export function SignalShell() {
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
                               {message.isOutgoing && (
-                                <span className={message.status === "read" ? "text-blue-900 font-bold" : message.status === "failed" ? "text-red-400" : ""}>
-                                  {message.status === "failed" ? "Failed" : message.status === "read" ? "✓✓" : message.status === "delivered" ? "✓✓" : "✓"}
+                                <span className={`flex items-center ${message.status === "read" ? "text-white drop-shadow-sm" : message.status === "failed" ? "text-red-400" : "text-blue-200"}`}>
+                                  {message.status === "failed" ? "Failed" : 
+                                   message.status === "sending" ? <Clock className="h-3 w-3" /> :
+                                   message.status === "sent" ? <Check className="h-3 w-3" /> :
+                                   message.status === "delivered" ? <CheckCheck className="h-3 w-3 opacity-70" /> :
+                                   <CheckCheck className="h-3 w-3" /> /* read */}
                                 </span>
                               )}
                               {message.status === "failed" && (
@@ -707,7 +715,7 @@ export function SignalShell() {
                                     return { ...old, pages: newPages };
                                   });
                                   // Retry with the original content
-                                  sendMessageMutation.mutate({ content: message.content || "", attachments: [], replyToId: message.quotedMessageId || null });
+                                  sendMessageMutation.mutate({ content: message.content || "", attachments: [], replyToId: message.quotedMessageId || null, clientMessageId: crypto.randomUUID() });
                                 }}>
                                   Retry
                                 </button>
@@ -732,17 +740,33 @@ export function SignalShell() {
                             </div>
                           </div>
                         </motion.div>
+                        {isOldestOfDay && (
+                          <div className="my-4 flex justify-center">
+                            <span className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 backdrop-blur-sm">
+                              {new Date(message.timestamp).toLocaleDateString(undefined, {
+                                weekday: "long",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-20 text-center text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
-                    <MessageSquarePlus className="mb-4 h-12 w-12 opacity-20" />
-                    <p className="text-sm">No messages here yet.</p>
-                    <p className="text-xs">Send a message to start the conversation.</p>
+                  <div className="flex h-full items-center justify-center py-20 text-center">
+                    <div>
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-500">
+                        <MessageSquarePlus className="h-6 w-6" />
+                      </div>
+                      <h3 className="mb-1 text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-100">No messages yet</h3>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">Send a message to start the conversation.</p>
+                    </div>
                   </div>
                 )}
-                <div ref={messagesEndRef} className="h-1" />
+                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 py-2">Loading older messages...</div>}
+                <div ref={loadMoreRef} className="h-4 w-full shrink-0" />
               </div>
             </div>
 
@@ -789,17 +813,21 @@ export function SignalShell() {
                       onChange={(e) => {
                         setComposerText(e.target.value);
                         if (activeConversationId) {
-                          socketService.emit("typing.start", { conversation_id: activeConversationId });
-                          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                          if (!typingTimeoutRef.current) {
+                            socketService.emit("typing.start", { conversation_id: activeConversationId });
+                          } else {
+                            clearTimeout(typingTimeoutRef.current);
+                          }
                           typingTimeoutRef.current = setTimeout(() => {
                             socketService.emit("typing.stop", { conversation_id: activeConversationId });
-                          }, 3000);
+                            typingTimeoutRef.current = null;
+                          }, 2000);
                         }
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
-                          if (composerText.trim()) sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId });
+                          if (composerText.trim()) sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId, clientMessageId: crypto.randomUUID() });
                         }
                       }}
                     />
@@ -823,7 +851,7 @@ export function SignalShell() {
                   <Button
                     size="icon"
                     className="shrink-0 rounded-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId })}
+                    onClick={() => sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId, clientMessageId: crypto.randomUUID() })}
                     disabled={!composerText.trim() && !queuedAttachments.length}
                   >
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white transform -rotate-90 translate-y-0.5"><path d="M22 12L3 20L6.5 12L3 4L22 12Z" fill="currentColor"/></svg>

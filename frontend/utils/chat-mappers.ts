@@ -11,17 +11,23 @@ function initials(value: string) {
 }
 
 export function mapApiMessage(message: ApiMessage, currentUserId: string): ChatMessage {
+  const receiverReceipts = message.receipts.filter((receipt) => receipt.user_id !== message.sender_id);
+  
   return {
     id: message.id,
     senderId: message.sender_id,
     content: message.content || "",
     timestamp: message.created_at,
     status:
-      message.receipts.some((receipt) => receipt.status === "READ")
-        ? "read"
-        : message.receipts.some((receipt) => receipt.status === "DELIVERED")
-          ? "delivered"
-          : "sent",
+      (message as any).status === "failed"
+        ? "failed"
+        : (message as any).status === "sending"
+          ? "sending"
+          : receiverReceipts.length > 0 && receiverReceipts.every((receipt) => receipt.status === "READ")
+          ? "read"
+          : receiverReceipts.some((receipt) => receipt.status === "DELIVERED" || receipt.status === "READ")
+            ? "delivered"
+            : "sent",
     isOutgoing: message.sender_id === currentUserId,
     isEdited: Boolean(message.edited_at),
     quotedMessageId: message.reply_to_id || undefined,

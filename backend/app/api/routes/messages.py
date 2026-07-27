@@ -83,7 +83,14 @@ async def create_message(
         scheduled_at=payload.scheduled_at,
     )
     detailed = await MessageRepository(db).get_message_detail(message.id)
-    return {"success": True, "data": format_message(detailed or message)}
+    msg_dict = format_message(detailed or message)
+
+    from app.websocket.manager import sio
+    from app.websocket.rooms import get_conversation_room
+    room = get_conversation_room(id)
+    await sio.emit("message.received", msg_dict, to=room)
+
+    return {"success": True, "data": msg_dict}
 
 
 @router.patch("/messages/{id}", response_model=dict[str, Any])

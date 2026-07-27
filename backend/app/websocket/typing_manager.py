@@ -5,8 +5,8 @@ from app.websocket.typing import InMemoryTypingStateManager
 
 logger = logging.getLogger(__name__)
 
-# Initialize the global typing state manager (3 seconds TTL)
-typing_state_store = InMemoryTypingStateManager(ttl_seconds=3.0)
+# Initialize the global typing state manager (2 seconds TTL)
+typing_state_store = InMemoryTypingStateManager(ttl_seconds=2.0)
 
 class TypingManager:
     async def set_typing(self, conversation_id: uuid.UUID, user_id: uuid.UUID, is_typing: bool) -> None:
