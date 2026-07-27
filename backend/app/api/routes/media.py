@@ -216,14 +216,22 @@ async def upload_media(
         except Exception:
             pass
 
-    file_bytes = await file.read()
     if not file.filename or not file.content_type:
         raise APIException(status.HTTP_400_BAD_REQUEST, "INVALID_FILE", "Uploaded file is missing metadata")
-    upload = await runtime_services.storage_provider.upload_file(
-        file_bytes=file_bytes,
-        filename=file.filename,
-        mime_type=file.content_type,
-    )
+
+    try:
+        file_bytes = await file.read()
+        upload = await runtime_services.storage_provider.upload_file(
+            file_bytes=file_bytes,
+            filename=file.filename,
+            mime_type=file.content_type,
+        )
+    except Exception as e:
+        import traceback
+        import logging
+        logging.getLogger("uvicorn").error(f"Upload failed: {traceback.format_exc()}")
+        raise APIException(status.HTTP_400_BAD_REQUEST, "UPLOAD_FAILED", f"Upload failed: {str(e)}")
+
     return {
         "success": True,
         "data": {

@@ -249,16 +249,30 @@ export function SignalShell() {
       if (!accessToken || !activeConversationId) {
         throw new Error("No active conversation selected");
       }
-      const uploadedAttachments =
-        payload.attachments.length > 0
-          ? await Promise.all(
-              payload.attachments
-                .filter((attachment): attachment is typeof attachment & { file: File } => "file" in attachment)
-                .map((attachment) => uploadMedia(accessToken, attachment.file))
-            )
-          : [];
+      
+      const uploadedAttachments = [];
+      if (payload.attachments.length > 0) {
+        for (const attachment of payload.attachments) {
+          if ("file" in attachment) {
+            try {
+              const result = await uploadMedia(accessToken, (attachment as any).file as File);
+              uploadedAttachments.push(result);
+            } catch (err: any) {
+              console.error("Failed to upload attachment:", err);
+              toast.error(`Failed to upload attachment: ${((attachment as any).file as File).name}`);
+            }
+          }
+        }
+      }
+
+      // If there's no content and NO attachments succeeded (and they tried to send an attachment), fail the message.
+      if (!payload.content?.trim() && payload.attachments.length > 0 && uploadedAttachments.length === 0) {
+          throw new Error("All attachments failed to upload.");
+      }
+
       return sendMessage(accessToken, activeConversationId, {
-        content: payload.content || null, message_type: payload.attachments.length > 0 ? "image" : "text",
+        content: payload.content || null, 
+        message_type: uploadedAttachments.length > 0 ? "image" : "text",
         reply_to_id: payload.replyToId,
         attachments: uploadedAttachments,
         client_message_id: payload.clientMessageId,
@@ -301,6 +315,18 @@ export function SignalShell() {
       setFeatureNotice(null);
 
       return { previousMessages, optimisticMessage };
+    },
+    onSuccess: (data, variables, context: any) => {
+      if (context?.optimisticMessage) {
+        queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
+          if (!old) return old;
+          const newPages = [...old.pages];
+          newPages[0] = newPages[0].map((m: any) => 
+            m.id === context.optimisticMessage.id ? { ...m, ...data, status: "sent" } : m
+          );
+          return { ...old, pages: newPages };
+        });
+      }
     },
     onError: (error: Error, _, context: any) => {
       setFeatureNotice(error.message);
@@ -455,7 +481,7 @@ export function SignalShell() {
   }, [accessToken, activeConversationId, currentUserId, queryClient, setSocketState]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-signal-dark-bg text-neutral-900 dark:text-neutral-900 dark:text-white">
+    <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-signal-dark-bg text-neutral-900 dark:text-white">
       <AnimatePresence>
         {(isOffline || socketBanner || featureNotice) && (
           <motion.div
@@ -470,14 +496,14 @@ export function SignalShell() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className={`${isSidebarOpen ? "flex" : "hidden"} w-80 flex-col border-r border-neutral-200 dark:border-neutral-200 dark:border-[#2B2B2B] bg-neutral-50 dark:bg-signal-dark-sidebar md:flex relative`}>
+      <aside className={`${isSidebarOpen ? "flex" : "hidden"} w-80 flex-col border-r border-neutral-200 dark:border-signal-dark-bubble bg-neutral-50 dark:bg-signal-dark-sidebar md:flex relative`}>
         {/* Sidebar Header */}
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-signal-blue-500 text-xs font-semibold text-white">
               {user?.display_name?.slice(0, 2).toUpperCase() || "SG"}
             </div>
-            <span className="font-medium text-neutral-900 dark:text-neutral-900 dark:text-white truncate max-w-[120px]">{user?.display_name || user?.username || "User"}</span>
+            <span className="font-medium text-neutral-900 dark:text-white truncate max-w-[120px]">{user?.display_name || user?.username || "User"}</span>
           </div>
           <div className="flex items-center gap-1">
             <ToolbarIcon label="Settings" onClick={() => openSettings("profile")}>
@@ -495,9 +521,9 @@ export function SignalShell() {
         {/* Search */}
         <div className="px-3 pb-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary" />
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-signal-dark-textSecondary" />
             <Input
-              className="h-8 w-full rounded-md border-none bg-neutral-200/80 dark:bg-neutral-200 dark:bg-neutral-200/80 dark:bg-neutral-200 dark:bg-signal-dark-bubble/80 pl-9 text-sm text-neutral-900 dark:text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-400 dark:placeholder-neutral-500 focus-visible:ring-1 focus-visible:ring-blue-500"
+              className="h-8 w-full rounded-md border-none bg-neutral-200/80 dark:bg-signal-dark-bubble/80 pl-9 text-sm text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-400 dark:placeholder-neutral-500 focus-visible:ring-1 focus-visible:ring-blue-500"
               placeholder="Search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -509,18 +535,18 @@ export function SignalShell() {
         <div className="flex-1 overflow-y-auto px-2">
           {deferredSearch ? (
             <div className="py-2">
-              <p className="px-2 text-xs font-medium uppercase text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">Global Search</p>
+              <p className="px-2 text-xs font-medium uppercase text-neutral-500 dark:text-signal-dark-textSecondary">Global Search</p>
               {searchResults.length === 0 ? (
-                <p className="px-2 py-3 text-sm text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">No results found.</p>
+                <p className="px-2 py-3 text-sm text-neutral-500 dark:text-signal-dark-textSecondary">No results found.</p>
               ) : (
                 searchResults.map((result) => (
                   <button
                     key={result.id}
-                    className="mt-1 w-full rounded-md px-2 py-2 text-left hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble"
+                    className="mt-1 w-full rounded-md px-2 py-2 text-left hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble"
                     onClick={() => result.conversationId && selectConversation(result.conversationId)}
                   >
-                    <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-white">{result.title}</div>
-                    <div className="truncate text-xs text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">{result.subtitle}</div>
+                    <div className="truncate text-sm font-medium text-neutral-900 dark:text-white">{result.title}</div>
+                    <div className="truncate text-xs text-neutral-500 dark:text-signal-dark-textSecondary">{result.subtitle}</div>
                   </button>
                 ))
               )}
@@ -530,10 +556,10 @@ export function SignalShell() {
               {conversationsQuery.isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-md px-2 py-2">
-                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble" />
+                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-neutral-200 dark:bg-signal-dark-bubble" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble" />
-                      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-200 dark:bg-signal-dark-bubble" />
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-200 dark:bg-signal-dark-bubble" />
                     </div>
                   </div>
                 ))
@@ -542,7 +568,7 @@ export function SignalShell() {
                   <button
                     key={conversation.id}
                     className={`flex w-full items-center gap-3 rounded-md px-2 py-2 transition-colors ${
-                      activeConversationId === conversation.id ? "bg-signal-blue-500 text-white" : "hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble"
+                      activeConversationId === conversation.id ? "bg-signal-blue-500 text-white" : "hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble"
                     }`}
                     onClick={() => selectConversation(conversation.id)}
                   >
@@ -556,12 +582,12 @@ export function SignalShell() {
                     <div className="min-w-0 flex-1 text-left">
                       <div className="flex justify-between">
                         <span className="truncate text-[15px] font-medium">{conversation.title}</span>
-                        <span className={`shrink-0 text-xs ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary"}`}>
+                        <span className={`shrink-0 text-xs ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500 dark:text-signal-dark-textSecondary"}`}>
                           {formatSidebarTime(conversation.lastMessageAt)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <p className={`truncate text-sm pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary"}`}>
+                        <p className={`truncate text-sm pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-600 dark:text-signal-dark-textSecondary"}`}>
                           {conversation.lastMessage || "No messages yet"}
                         </p>
                         {conversation.unreadCount > 0 && (
@@ -574,7 +600,7 @@ export function SignalShell() {
                   </button>
                 ))
               ) : (
-                <div className="mt-10 px-4 text-center text-sm text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">
+                <div className="mt-10 px-4 text-center text-sm text-neutral-500 dark:text-signal-dark-textSecondary">
                   No conversations. Click New Chat to start.
                 </div>
               )}
@@ -591,16 +617,16 @@ export function SignalShell() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 10 }}
                 transition={{ duration: 0.15 }}
-                className="mb-4 flex flex-col gap-2 rounded-xl border border-neutral-200 dark:border-neutral-200 dark:border-[#2B2B2B] bg-neutral-100 dark:bg-signal-dark-sidebar dark:bg-signal-dark-bubble p-2 shadow-xl"
+                className="mb-4 flex flex-col gap-2 rounded-xl border border-neutral-200 dark:border-signal-dark-bubble bg-neutral-100 dark:bg-signal-dark-sidebar dark:bg-signal-dark-bubble p-2 shadow-xl"
               >
                 <button
                   onClick={() => {
                     setIsFabOpen(false);
                     setShowNewContact(true);
                   }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-white transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-900 dark:text-white transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-signal-dark-bubble">
                     <UserPlus className="h-4 w-4 text-signal-blue-400" />
                   </div>
                   New Contact
@@ -610,9 +636,9 @@ export function SignalShell() {
                     setIsFabOpen(false);
                     setShowNewGroup(true);
                   }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-white transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-900 dark:text-white transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-signal-dark-bubble">
                     <Users className="h-4 w-4 text-signal-blue-400" />
                   </div>
                   New Group
@@ -641,7 +667,7 @@ export function SignalShell() {
         {activeConversationId ? (
           <>
             {/* Chat Header */}
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 dark:border-neutral-200 dark:border-[#2B2B2B] bg-neutral-50 dark:bg-signal-dark-header px-4">
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 dark:border-signal-dark-bubble bg-neutral-50 dark:bg-signal-dark-header px-4">
               <button 
                 className="flex items-center gap-3 text-left hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 p-1.5 -ml-1.5 rounded-lg transition-colors cursor-pointer"
                 onClick={() => setShowConversationInfo(true)}
@@ -654,8 +680,8 @@ export function SignalShell() {
                     {activeConversation?.avatar}
                   </div>
                   <div>
-                    <h2 className="text-[15px] font-medium text-neutral-900 dark:text-neutral-900 dark:text-white">{activeConversation?.title}</h2>
-                    <p className="text-xs text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">
+                    <h2 className="text-[15px] font-medium text-neutral-900 dark:text-white">{activeConversation?.title}</h2>
+                    <p className="text-xs text-neutral-500 dark:text-signal-dark-textSecondary">
                       {typingUsers.size > 0 ? (
                         <span className="text-signal-blue-400">Typing...</span>
                       ) : conversationDetailQuery.data?.type === "GROUP" ? (
@@ -690,7 +716,7 @@ export function SignalShell() {
                 {messagesQuery.isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
-                      <div className="h-10 w-48 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble" />
+                      <div className="h-10 w-48 animate-pulse rounded-lg bg-neutral-200 dark:bg-signal-dark-bubble" />
                     </div>
                   ))
                 ) : mappedMessages.length ? (
@@ -725,7 +751,7 @@ export function SignalShell() {
                               className={`relative max-w-[85%] rounded-[18px] px-3 py-1.5 text-[15px] leading-relaxed shadow-sm ${
                               message.isOutgoing
                                 ? "rounded-br-sm bg-signal-blue-500 text-white"
-                                : "rounded-bl-sm bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-900 dark:text-neutral-900 dark:text-white"
+                                : "rounded-bl-sm bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-900 dark:text-white"
                             }`}
                           >
                             {quoted && (
@@ -738,7 +764,7 @@ export function SignalShell() {
                               </button>
                             )}
                             <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                            <div className={`mt-0.5 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary"}`}>
+                            <div className={`mt-0.5 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500 dark:text-signal-dark-textSecondary"}`}>
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
                               {message.isOutgoing && (
@@ -769,15 +795,15 @@ export function SignalShell() {
                             
                             {/* Message Actions (Hover) */}
                             <div className={`absolute ${message.isOutgoing ? "-left-24" : "-right-8"} top-1/2 hidden -translate-y-1/2 items-center gap-1 group-hover:flex`}>
-                              <button className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
+                              <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
                                 <Copy className="h-3 w-3" />
                               </button>
                               {message.isOutgoing && (
                                 <>
-                                  <button className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
+                                  <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
                                     <Edit2 className="h-3 w-3" />
                                   </button>
-                                  <button className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
+                                  <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
                                     <Trash2 className="h-3 w-3" />
                                   </button>
                                 </>
@@ -788,7 +814,7 @@ export function SignalShell() {
                         </motion.div>
                         {isOldestOfDay && (
                           <div className="my-4 flex justify-center">
-                            <span className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble/60 px-3 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary backdrop-blur-sm">
+                            <span className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble/60 px-3 py-1 text-xs font-medium text-neutral-600 dark:text-signal-dark-textSecondary backdrop-blur-sm">
                               {new Date(message.timestamp).toLocaleDateString(undefined, {
                                 weekday: "long",
                                 month: "short",
@@ -806,12 +832,12 @@ export function SignalShell() {
                       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-signal-blue-500">
                         <MessageSquarePlus className="h-6 w-6" />
                       </div>
-                      <h3 className="mb-1 text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-white">No messages yet</h3>
-                      <p className="text-sm text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">Send a message to start the conversation.</p>
+                      <h3 className="mb-1 text-sm font-medium text-neutral-900 dark:text-white">No messages yet</h3>
+                      <p className="text-sm text-neutral-500 dark:text-signal-dark-textSecondary">Send a message to start the conversation.</p>
                     </div>
                   </div>
                 )}
-                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary py-2">Loading older messages...</div>}
+                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 dark:text-signal-dark-textSecondary py-2">Loading older messages...</div>}
                 <div ref={loadMoreRef} className="h-4 w-full shrink-0" />
               </div>
             </div>
@@ -820,12 +846,12 @@ export function SignalShell() {
             <div className="shrink-0 bg-neutral-50 dark:bg-signal-dark-header p-4">
               <div className="mx-auto max-w-3xl">
                 {replyMessage && (
-                  <div className="mb-2 flex items-center justify-between rounded-t-lg bg-neutral-200 dark:bg-neutral-200 dark:bg-signal-dark-bubble px-3 py-2 text-sm border-l-2 border-signal-blue-500">
+                  <div className="mb-2 flex items-center justify-between rounded-t-lg bg-neutral-200 dark:bg-signal-dark-bubble px-3 py-2 text-sm border-l-2 border-signal-blue-500">
                     <div>
                       <span className="font-semibold text-signal-blue-400">Replying to {replyMessage.isOutgoing ? "yourself" : activeConversation?.title}</span>
-                      <p className="text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary truncate max-w-sm">{replyMessage.content}</p>
+                      <p className="text-neutral-600 dark:text-signal-dark-textSecondary truncate max-w-sm">{replyMessage.content}</p>
                     </div>
-                    <Button size="sm" variant="ghost" className="h-6 text-neutral-600 dark:text-neutral-600 dark:text-signal-dark-textSecondary" onClick={() => setReplyTarget(null)}>✕</Button>
+                    <Button size="sm" variant="ghost" className="h-6 text-neutral-600 dark:text-signal-dark-textSecondary" onClick={() => setReplyTarget(null)}>✕</Button>
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
@@ -908,12 +934,12 @@ export function SignalShell() {
             </div>
           </>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center bg-white dark:bg-signal-dark-bg text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">
+          <div className="flex h-full flex-col items-center justify-center bg-white dark:bg-signal-dark-bg text-neutral-500 dark:text-signal-dark-textSecondary">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-signal-dark-sidebar dark:bg-signal-dark-bubble mb-6 shadow-inner">
               <MessageSquarePlus className="h-8 w-8 text-neutral-700" />
             </div>
             <p className="text-lg font-medium text-neutral-300">Signal Desktop Clone</p>
-            <p className="mt-2 max-w-sm text-center text-sm text-neutral-500 dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary dark:text-signal-dark-textSecondary">Select a chat to start messaging.</p>
+            <p className="mt-2 max-w-sm text-center text-sm text-neutral-500 dark:text-signal-dark-textSecondary">Select a chat to start messaging.</p>
           </div>
         )}
       </main>

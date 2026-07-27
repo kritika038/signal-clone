@@ -6,7 +6,7 @@ import os
 import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from app.core.config import settings
 
@@ -72,9 +72,12 @@ class StorageProvider(ABC):
 
 
 class LocalStorageProvider(StorageProvider):
-    def __init__(self, upload_dir: str | None = None):
+    def __init__(self, upload_dir: Optional[str] = None):
         super().__init__()
-        self.upload_dir = Path(upload_dir or settings.STORAGE_LOCAL_PATH)
+        # Resolve to an absolute path to ensure reliability across environments like Render
+        from app.core.config import settings
+        raw_path = upload_dir or settings.STORAGE_LOCAL_PATH
+        self.upload_dir = Path(raw_path).resolve()
         self.upload_dir.mkdir(parents=True, exist_ok=True)
 
     async def upload_file(self, file_bytes: bytes, filename: str, mime_type: str) -> dict[str, Any]:

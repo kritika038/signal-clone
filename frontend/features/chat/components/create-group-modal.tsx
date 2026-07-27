@@ -207,7 +207,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                       <Loader2 className="w-8 h-8 text-neutral-500 animate-spin" />
                     ) : avatarUrl ? (
                       <img
-                        src={`/api/v1/media/${avatarUrl}`}
+                        src={`/api/v1/attachments/download/${avatarUrl}`}
                         alt="Group Avatar"
                         className="w-full h-full object-cover"
                       />

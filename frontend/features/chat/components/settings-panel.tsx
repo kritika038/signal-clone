@@ -171,7 +171,7 @@ export function SettingsPanel() {
               <div className="flex flex-col items-center gap-4">
                 <div className="relative h-24 w-24 overflow-hidden rounded-full bg-neutral-200 dark:bg-signal-dark-bubble flex items-center justify-center">
                   {form.watch("avatar_url") ? (
-                    <img src={form.watch("avatar_url")} alt="Avatar" className="h-full w-full object-cover" />
+                    <img src={form.watch("avatar_url")!.startsWith('http') || form.watch("avatar_url")!.startsWith('/') ? form.watch("avatar_url") : `/api/v1/attachments/download/${form.watch("avatar_url")}`} alt="Avatar" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-2xl text-neutral-500 dark:text-signal-dark-textSecondary">{user?.display_name?.slice(0, 2).toUpperCase()}</span>
                   )}

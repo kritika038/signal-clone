@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fetchContacts } from "@/services/contacts";
 import { updateGroup, addGroupMember, removeGroupMember, fetchConversation, updateGroupMemberRole, uploadMedia, leaveGroup } from "@/services/chat";
+import { mapApiConversation } from "@/utils/chat-mappers";
 
 interface ConversationInfoModalProps {
   isOpen: boolean;
@@ -51,6 +52,11 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
   const currentUserMember = members.find(m => m.user_id === currentUserId && !m.left_at);
   const isAdmin = currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER";
   const isGroup = conversation?.type === "GROUP";
+
+  const mappedConversation = useMemo(() => {
+    if (!conversation || !currentUserId) return null;
+    return mapApiConversation(conversation, currentUserId);
+  }, [conversation, currentUserId]);
 
   const updateMutation = useMutation({
     mutationFn: (name: string) => updateGroup(accessToken!, activeConversationId!, { name }),
@@ -169,11 +175,11 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                 <div className="relative group w-24 h-24 mb-4">
                   <div className="w-full h-full rounded-full bg-signal-blue-500/20 text-signal-blue-400 flex items-center justify-center text-3xl font-semibold overflow-hidden">
                     {conversation.avatar_url ? (
-                      <img src={`/api/v1/media/${conversation.avatar_url}`} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={`/api/v1/attachments/download/${conversation.avatar_url}`} alt="Avatar" className="w-full h-full object-cover" />
                     ) : isGroup ? (
                       <Users className="w-10 h-10" />
                     ) : (
-                      conversation.name?.charAt(0).toUpperCase() || "?"
+                      mappedConversation?.title?.charAt(0).toUpperCase() || "?"
                     )}
                   </div>
                   {isGroup && isAdmin && (
@@ -212,15 +218,31 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                 ) : (
                   <div className="flex flex-col items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-xl font-bold text-neutral-100">{conversation.name || "Unknown"}</h2>
+                      <h2 className="text-xl font-bold text-neutral-100">{isGroup ? (conversation.name || "Unknown") : mappedConversation?.title || "Unknown"}</h2>
                       {isGroup && isAdmin && (
                         <button onClick={() => { setEditName(conversation.name || ""); setIsEditing(true); }} className="text-neutral-500 hover:text-white transition-colors">
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
-                    {conversation.description && (
+                    {isGroup && conversation.description && (
                       <p className="text-sm text-neutral-400 text-center px-4 mt-2 mb-1">{conversation.description}</p>
+                    )}
+                    {!isGroup && mappedConversation?.members[0] && (
+                      <div className="flex flex-col items-center mt-2 text-center w-full max-w-xs space-y-3">
+                        {mappedConversation.members[0].phone && (
+                          <div className="w-full bg-neutral-950 p-3 rounded-lg border border-neutral-800 flex flex-col">
+                            <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1 text-left">Phone</span>
+                            <span className="text-sm text-neutral-200 text-left font-mono">{mappedConversation.members[0].phone}</span>
+                          </div>
+                        )}
+                        {mappedConversation.members[0].about && (
+                          <div className="w-full bg-neutral-950 p-3 rounded-lg border border-neutral-800 flex flex-col">
+                            <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1 text-left">About</span>
+                            <span className="text-sm text-neutral-200 text-left">{mappedConversation.members[0].about}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -339,7 +361,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                                 >
                                   <ArrowUpCircle className="w-4 h-4" />
                                 </Button>
-                              ) : currentUserMember?.role === "OWNER" ? (
+                              ) : (currentUserMember?.role === "ADMIN" || currentUserMember?.role === "OWNER") && (member.role === "ADMIN" || member.role === "OWNER") ? (
                                 <Button
                                   size="icon"
                                   variant="ghost"
