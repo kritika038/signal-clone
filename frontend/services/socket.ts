@@ -22,7 +22,6 @@ class SocketService {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 8000,
       auth: token ? { token } : undefined,
-      transports: ["websocket", "polling"],
     });
 
     this.socket.connect();

@@ -20,6 +20,8 @@ import {
   Plus,
   UserPlus,
   Users,
+  Paperclip,
+  Phone,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -44,6 +46,7 @@ import { NewChatModal } from "./new-chat-modal";
 import { CreateGroupModal } from "./create-group-modal";
 import { NewContactModal } from "./new-contact-modal";
 import { ConversationInfoModal } from "./conversation-info-modal";
+import { ComingSoonModal } from "./coming-soon-modal";
 import { socketService } from "@/services/socket";
 import { fetchContacts } from "@/services/contacts";
 import { useSessionStore } from "@/store/use-session-store";
@@ -53,6 +56,8 @@ import { mapApiConversation, mapApiMessage, mapSearchResults } from "@/utils/cha
 import { formatMessageTime, formatPresenceText, formatSidebarTime } from "@/utils/chat";
 
 import { SettingsPanel } from "@/features/chat/components/settings-panel";
+import { ThemeMode } from "@/types/chat";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 
 export function SignalShell() {
   const router = useRouter();
@@ -88,6 +93,9 @@ export function SignalShell() {
   const [showNewContact, setShowNewContact] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [comingSoonFeature, setComingSoonFeature] = useState<{title: string, feature: string} | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -320,7 +328,7 @@ export function SignalShell() {
     socketService.disconnect();
     clearSession();
     queryClient.clear();
-    router.push("/login");
+    router.push("/");
   };
 
   const createGroupMutation = useMutation({
@@ -402,7 +410,7 @@ export function SignalShell() {
   }, [accessToken, activeConversationId, currentUserId, queryClient, setSocketState]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-neutral-950 text-neutral-200">
+    <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-900 dark:text-neutral-200">
       <AnimatePresence>
         {(isOffline || socketBanner || featureNotice) && (
           <motion.div
@@ -417,14 +425,14 @@ export function SignalShell() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className={`${isSidebarOpen ? "flex" : "hidden"} w-80 flex-col border-r border-neutral-800 bg-neutral-900/50 md:flex relative`}>
+      <aside className={`${isSidebarOpen ? "flex" : "hidden"} w-80 flex-col border-r border-neutral-200 dark:border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-900/50 md:flex relative`}>
         {/* Sidebar Header */}
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
               {user?.display_name?.slice(0, 2).toUpperCase() || "SG"}
             </div>
-            <span className="font-medium text-neutral-200 truncate max-w-[120px]">{user?.display_name || user?.username || "User"}</span>
+            <span className="font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-200 truncate max-w-[120px]">{user?.display_name || user?.username || "User"}</span>
           </div>
           <div className="flex items-center gap-1">
             <ToolbarIcon label="Settings" onClick={() => openSettings("profile")}>
@@ -442,9 +450,9 @@ export function SignalShell() {
         {/* Search */}
         <div className="px-3 pb-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500" />
             <Input
-              className="h-8 w-full rounded-md border-none bg-neutral-800/80 pl-9 text-sm text-neutral-200 placeholder-neutral-500 focus-visible:ring-1 focus-visible:ring-blue-500"
+              className="h-8 w-full rounded-md border-none bg-neutral-200/80 dark:bg-neutral-200 dark:bg-neutral-200/80 dark:bg-neutral-200 dark:bg-neutral-800/80 pl-9 text-sm text-neutral-900 dark:text-neutral-900 dark:text-neutral-200 placeholder-neutral-400 dark:placeholder-neutral-400 dark:placeholder-neutral-500 focus-visible:ring-1 focus-visible:ring-blue-500"
               placeholder="Search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -456,18 +464,18 @@ export function SignalShell() {
         <div className="flex-1 overflow-y-auto px-2">
           {deferredSearch ? (
             <div className="py-2">
-              <p className="px-2 text-xs font-medium uppercase text-neutral-500">Global Search</p>
+              <p className="px-2 text-xs font-medium uppercase text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">Global Search</p>
               {searchResults.length === 0 ? (
-                <p className="px-2 py-3 text-sm text-neutral-500">No results found.</p>
+                <p className="px-2 py-3 text-sm text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">No results found.</p>
               ) : (
                 searchResults.map((result) => (
                   <button
                     key={result.id}
-                    className="mt-1 w-full rounded-md px-2 py-2 text-left hover:bg-neutral-800"
+                    className="mt-1 w-full rounded-md px-2 py-2 text-left hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800"
                     onClick={() => result.conversationId && selectConversation(result.conversationId)}
                   >
-                    <div className="truncate text-sm font-medium text-neutral-200">{result.title}</div>
-                    <div className="truncate text-xs text-neutral-500">{result.subtitle}</div>
+                    <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-200">{result.title}</div>
+                    <div className="truncate text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">{result.subtitle}</div>
                   </button>
                 ))
               )}
@@ -477,10 +485,10 @@ export function SignalShell() {
               {conversationsQuery.isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-md px-2 py-2">
-                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-neutral-800" />
+                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-800" />
-                      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-800" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800" />
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800" />
                     </div>
                   </div>
                 ))
@@ -489,13 +497,13 @@ export function SignalShell() {
                   <button
                     key={conversation.id}
                     className={`flex w-full items-center gap-3 rounded-md px-2 py-2 transition-colors ${
-                      activeConversationId === conversation.id ? "bg-blue-600 text-white" : "hover:bg-neutral-800"
+                      activeConversationId === conversation.id ? "bg-blue-600 text-white" : "hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800"
                     }`}
                     onClick={() => selectConversation(conversation.id)}
                   >
                     <div
                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                        activeConversationId === conversation.id ? "bg-white/20 text-white" : "bg-blue-500/20 text-blue-400"
+                        activeConversationId === conversation.id ? "bg-black/5 dark:bg-black/5 dark:bg-black/10 dark:bg-black/5 dark:bg-black/10 dark:bg-white/20 text-white" : "bg-blue-500/20 text-blue-400"
                       }`}
                     >
                       {conversation.avatar}
@@ -503,12 +511,12 @@ export function SignalShell() {
                     <div className="min-w-0 flex-1 text-left">
                       <div className="flex justify-between">
                         <span className="truncate text-[15px] font-medium">{conversation.title}</span>
-                        <span className={`shrink-0 text-xs ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500"}`}>
+                        <span className={`shrink-0 text-xs ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500"}`}>
                           {formatSidebarTime(conversation.lastMessageAt)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <p className={`truncate text-sm pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-400"}`}>
+                        <p className={`truncate text-sm pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-600 dark:text-neutral-600 dark:text-neutral-400"}`}>
                           {conversation.lastMessage || "No messages yet"}
                         </p>
                         {conversation.unreadCount > 0 && (
@@ -521,7 +529,7 @@ export function SignalShell() {
                   </button>
                 ))
               ) : (
-                <div className="mt-10 px-4 text-center text-sm text-neutral-500">
+                <div className="mt-10 px-4 text-center text-sm text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
                   No conversations. Click New Chat to start.
                 </div>
               )}
@@ -538,16 +546,16 @@ export function SignalShell() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 10 }}
                 transition={{ duration: 0.15 }}
-                className="mb-4 flex flex-col gap-2 rounded-xl border border-neutral-800 bg-neutral-900 p-2 shadow-xl"
+                className="mb-4 flex flex-col gap-2 rounded-xl border border-neutral-200 dark:border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-100 dark:bg-neutral-900 p-2 shadow-xl"
               >
                 <button
                   onClick={() => {
                     setIsFabOpen(false);
                     setShowNewContact(true);
                   }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-200 transition-colors hover:bg-neutral-800"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-200 transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800">
                     <UserPlus className="h-4 w-4 text-blue-400" />
                   </div>
                   New Contact
@@ -557,9 +565,9 @@ export function SignalShell() {
                     setIsFabOpen(false);
                     setShowNewGroup(true);
                   }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-200 transition-colors hover:bg-neutral-800"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-200 transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800">
                     <Users className="h-4 w-4 text-blue-400" />
                   </div>
                   New Group
@@ -584,11 +592,11 @@ export function SignalShell() {
       </aside>
 
       {/* Main Chat Area */}
-      <main className="flex min-w-0 flex-1 flex-col bg-neutral-950">
+      <main className="flex min-w-0 flex-1 flex-col bg-white dark:bg-white dark:bg-neutral-950">
         {activeConversationId ? (
           <>
             {/* Chat Header */}
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-800 bg-neutral-900/50 px-4">
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 dark:border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-900/50 px-4">
               <div className="flex items-center gap-3">
                 <Button className="md:hidden" size="icon" variant="ghost" onClick={toggleSidebar}>
                   <Menu className="h-5 w-5" />
@@ -597,8 +605,8 @@ export function SignalShell() {
                   {activeConversation?.avatar}
                 </div>
                 <div>
-                  <h2 className="text-[15px] font-medium text-neutral-100">{activeConversation?.title}</h2>
-                  <p className="text-xs text-neutral-500">
+                  <h2 className="text-[15px] font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-100">{activeConversation?.title}</h2>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
                     {typingUsers.size > 0 ? (
                       <span className="text-blue-400">typing...</span>
                     ) : conversationDetailQuery.data?.type === "GROUP" ? (
@@ -609,11 +617,11 @@ export function SignalShell() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <ToolbarIcon label="Voice Call" onClick={() => setFeatureNotice("Voice Calls are coming soon.")}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              <div className="flex items-center gap-2">
+                <ToolbarIcon label="Voice Call" onClick={() => setComingSoonFeature({ title: "Voice Call", feature: "End-to-end encrypted voice calling" })}>
+                  <Phone className="h-4 w-4" />
                 </ToolbarIcon>
-                <ToolbarIcon label="Video Call" onClick={() => setFeatureNotice("Video Calls are coming soon.")}>
+                <ToolbarIcon label="Video Call" onClick={() => setComingSoonFeature({ title: "Video Call", feature: "End-to-end encrypted video calling" })}>
                   <Video className="h-4 w-4" />
                 </ToolbarIcon>
                 <ToolbarIcon label="Search">
@@ -629,11 +637,11 @@ export function SignalShell() {
             <div className="flex-1 overflow-y-auto p-4">
               <div className="mx-auto max-w-3xl space-y-2">
                 <div ref={loadMoreRef} className="h-4 w-full" />
-                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 py-2">Loading older messages...</div>}
+                {messagesQuery.isFetchingNextPage && <div className="text-center text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 py-2">Loading older messages...</div>}
                 {messagesQuery.isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
-                      <div className="h-10 w-48 animate-pulse rounded-lg bg-neutral-800" />
+                      <div className="h-10 w-48 animate-pulse rounded-lg bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800" />
                     </div>
                   ))
                 ) : mappedMessages.length ? (
@@ -650,7 +658,7 @@ export function SignalShell() {
                       <div key={message.id}>
                         {showDay && (
                           <div className="my-4 flex justify-center">
-                            <span className="rounded-full bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-400 backdrop-blur-sm">
+                            <span className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800/60 px-3 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 backdrop-blur-sm">
                               {new Date(message.timestamp).toLocaleDateString(undefined, {
                                 weekday: "long",
                                 month: "short",
@@ -668,12 +676,12 @@ export function SignalShell() {
                             className={`relative max-w-[70%] rounded-2xl px-3.5 py-2 text-[15px] leading-relaxed shadow-sm ${
                               message.isOutgoing
                                 ? "rounded-br-sm bg-blue-600 text-white"
-                                : "rounded-bl-sm bg-neutral-800 text-neutral-100"
+                                : "rounded-bl-sm bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-900 dark:text-neutral-100"
                             }`}
                           >
                             {quoted && (
                               <button
-                                className="mb-2 block w-full rounded-md border-l-2 border-white/20 bg-black/10 px-2 py-1 text-left text-xs text-white/80"
+                                className="mb-2 block w-full rounded-md border-l-2 border-white/20 bg-black/5 dark:bg-black/5 dark:bg-black/10 px-2 py-1 text-left text-xs text-black/80 dark:text-black/80 dark:text-white/80"
                                 onClick={() => setReplyTarget(quoted.id)}
                               >
                                 <span className="block font-semibold">{quoted.isOutgoing ? "You" : activeConversation?.title}</span>
@@ -681,7 +689,7 @@ export function SignalShell() {
                               </button>
                             )}
                             <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                            <div className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500"}`}>
+                            <div className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500"}`}>
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
                               {message.isOutgoing && (
@@ -708,15 +716,15 @@ export function SignalShell() {
                             
                             {/* Message Actions (Hover) */}
                             <div className={`absolute ${message.isOutgoing ? "-left-24" : "-right-8"} top-1/2 hidden -translate-y-1/2 items-center gap-1 group-hover:flex`}>
-                              <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-white" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
+                              <button className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800 p-1.5 text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
                                 <Copy className="h-3 w-3" />
                               </button>
                               {message.isOutgoing && (
                                 <>
-                                  <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
+                                  <button className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800 p-1.5 text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
                                     <Edit2 className="h-3 w-3" />
                                   </button>
-                                  <button className="rounded-full bg-neutral-800 p-1.5 text-neutral-400 hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
+                                  <button className="rounded-full bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800 p-1.5 text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
                                     <Trash2 className="h-3 w-3" />
                                   </button>
                                 </>
@@ -728,7 +736,7 @@ export function SignalShell() {
                     );
                   })
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-20 text-center text-neutral-500">
+                  <div className="flex flex-col items-center justify-center py-20 text-center text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
                     <MessageSquarePlus className="mb-4 h-12 w-12 opacity-20" />
                     <p className="text-sm">No messages here yet.</p>
                     <p className="text-xs">Send a message to start the conversation.</p>
@@ -739,24 +747,43 @@ export function SignalShell() {
             </div>
 
             {/* Chat Input */}
-            <div className="shrink-0 bg-neutral-900/50 p-4">
+            <div className="shrink-0 bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-900/50 p-4">
               <div className="mx-auto max-w-3xl">
                 {replyMessage && (
-                  <div className="mb-2 flex items-center justify-between rounded-t-lg bg-neutral-800 px-3 py-2 text-sm border-l-2 border-blue-500">
+                  <div className="mb-2 flex items-center justify-between rounded-t-lg bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800 px-3 py-2 text-sm border-l-2 border-blue-500">
                     <div>
                       <span className="font-semibold text-blue-400">Replying to {replyMessage.isOutgoing ? "yourself" : activeConversation?.title}</span>
-                      <p className="text-neutral-400 truncate max-w-sm">{replyMessage.content}</p>
+                      <p className="text-neutral-600 dark:text-neutral-600 dark:text-neutral-400 truncate max-w-sm">{replyMessage.content}</p>
                     </div>
-                    <Button size="sm" variant="ghost" className="h-6 text-neutral-400" onClick={() => setReplyTarget(null)}>✕</Button>
+                    <Button size="sm" variant="ghost" className="h-6 text-neutral-600 dark:text-neutral-600 dark:text-neutral-400" onClick={() => setReplyTarget(null)}>✕</Button>
                   </div>
                 )}
-                <div className="flex items-end gap-2">
-                  <Button size="icon" variant="ghost" className="shrink-0 text-neutral-400 hover:text-neutral-100" onClick={() => fileInputRef.current?.click()}>
-                    <ImageIcon className="h-5 w-5" />
-                  </Button>
-                  <div className="flex min-h-[44px] flex-1 items-end rounded-2xl bg-neutral-800 px-3 py-1 shadow-sm focus-within:ring-1 focus-within:ring-blue-500">
+                <div className="flex flex-col gap-2">
+                  {queuedAttachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2 px-12 mb-2">
+                      {queuedAttachments.map((attachment) => (
+                        <div key={attachment.id} className="flex items-center gap-2 rounded-lg bg-white dark:bg-neutral-800 p-2 shadow-sm border border-neutral-200 dark:border-neutral-700">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-500">
+                            {attachment.type === "image" ? <ImageIcon className="h-4 w-4" /> : attachment.type === "video" ? <Video className="h-4 w-4" /> : <Paperclip className="h-4 w-4" />}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium text-neutral-900 dark:text-neutral-200 truncate max-w-[120px]">{attachment.name}</span>
+                            <span className="text-[10px] text-neutral-500 dark:text-neutral-400">{attachment.sizeLabel}</span>
+                          </div>
+                          <Button size="icon" variant="ghost" className="h-6 w-6 ml-1 text-neutral-500 hover:text-red-500" onClick={() => useSignalStore.setState(state => ({ queuedAttachments: state.queuedAttachments.filter(a => a.id !== attachment.id) }))}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-end gap-2">
+                    <Button size="icon" variant="ghost" className="shrink-0 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100" onClick={() => fileInputRef.current?.click()}>
+                      <Paperclip className="h-5 w-5" />
+                    </Button>
+                    <div className="flex min-h-[44px] flex-1 items-end rounded-2xl bg-neutral-100 dark:bg-neutral-800 px-3 py-1 shadow-sm focus-within:ring-1 focus-within:ring-blue-500">
                     <Textarea
-                      className="max-h-32 min-h-[36px] w-full resize-none border-0 bg-transparent py-2 text-[15px] placeholder:text-neutral-500 focus-visible:ring-0"
+                      className="max-h-32 min-h-[36px] w-full resize-none border-0 bg-transparent py-2 text-[15px] placeholder:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 focus-visible:ring-0"
                       placeholder="Write a message..."
                       value={composerText}
                       onChange={(e) => {
@@ -776,9 +803,22 @@ export function SignalShell() {
                         }
                       }}
                     />
-                    <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 text-neutral-400 hover:text-neutral-100" onClick={() => setFeatureNotice("Emoji picker is coming soon.")}>
-                      <Smile className="h-5 w-5" />
-                    </Button>
+                    <div className="relative">
+                      <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+                        <Smile className="h-5 w-5" />
+                      </Button>
+                      {showEmojiPicker && (
+                        <div className="absolute bottom-12 right-0 z-50 shadow-premium-dark rounded-lg overflow-hidden">
+                          <EmojiPicker 
+                            theme={(theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) ? Theme.DARK : Theme.LIGHT}
+                            onEmojiClick={(emojiData) => {
+                              setComposerText(composerText + emojiData.emoji);
+                              setShowEmojiPicker(false);
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <Button
                     size="icon"
@@ -789,16 +829,17 @@ export function SignalShell() {
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white transform -rotate-90 translate-y-0.5"><path d="M22 12L3 20L6.5 12L3 4L22 12Z" fill="currentColor"/></svg>
                   </Button>
                 </div>
+                </div>
               </div>
             </div>
           </>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center bg-neutral-950 text-neutral-500">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-900 mb-6 shadow-inner">
+          <div className="flex h-full flex-col items-center justify-center bg-white dark:bg-white dark:bg-neutral-950 text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-100 dark:bg-neutral-900 mb-6 shadow-inner">
               <MessageSquarePlus className="h-8 w-8 text-neutral-700" />
             </div>
             <p className="text-lg font-medium text-neutral-300">Signal Desktop Clone</p>
-            <p className="mt-2 max-w-sm text-center text-sm text-neutral-500">Select a chat to start messaging.</p>
+            <p className="mt-2 max-w-sm text-center text-sm text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">Select a chat to start messaging.</p>
           </div>
         )}
       </main>
@@ -814,6 +855,14 @@ export function SignalShell() {
       <CreateGroupModal isOpen={showNewGroup} onClose={() => setShowNewGroup(false)} />
       <NewContactModal isOpen={showNewContact} onClose={() => setShowNewContact(false)} />
       <ConversationInfoModal isOpen={showConversationInfo} onClose={() => setShowConversationInfo(false)} />
+      {comingSoonFeature && (
+        <ComingSoonModal 
+          isOpen={true} 
+          onClose={() => setComingSoonFeature(null)} 
+          title={comingSoonFeature.title} 
+          feature={comingSoonFeature.feature} 
+        />
+      )}
 
       <input
         ref={fileInputRef}
