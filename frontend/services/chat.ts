@@ -208,6 +208,10 @@ export async function searchGlobal(token: string, query: string) {
   return apiRequest<ApiSearchResult>(`/api/v1/search?q=${encodeURIComponent(query)}`, { token });
 }
 
+export async function searchUserByPhone(token: string, phone: string) {
+  return apiRequest<ApiUserSummary | null>(`/api/v1/search/phone?q=${encodeURIComponent(phone)}`, { token });
+}
+
 export async function updateGroup(
   token: string,
   groupId: string,

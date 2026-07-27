@@ -81,7 +81,12 @@ async def create_contact(
     if not target_user or target_user.deleted_at is not None:
         raise APIException(status.HTTP_404_NOT_FOUND, "CONTACT_NOT_FOUND", "Contact user not found")
 
-    contact = await ContactRepository(db).add_contact(
+    contact_repo = ContactRepository(db)
+    existing_contact = await contact_repo.get_contact_by_users(current_user.id, payload.contact_user_id)
+    if existing_contact:
+        raise APIException(status.HTTP_400_BAD_REQUEST, "CONTACT_ALREADY_EXISTS", "User is already in your contacts")
+
+    contact = await contact_repo.add_contact(
         current_user.id, payload.contact_user_id, payload.nickname
     )
     await db.refresh(contact, attribute_names=["contact_user"])

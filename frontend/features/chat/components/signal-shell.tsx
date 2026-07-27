@@ -17,6 +17,9 @@ import {
   Trash2,
   Copy,
   LogOut,
+  Plus,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -84,6 +87,7 @@ export function SignalShell() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [showNewContact, setShowNewContact] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
+  const [isFabOpen, setIsFabOpen] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -413,7 +417,7 @@ export function SignalShell() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className={`${isSidebarOpen ? "flex" : "hidden"} w-80 flex-col border-r border-neutral-800 bg-neutral-900/50 md:flex`}>
+      <aside className={`${isSidebarOpen ? "flex" : "hidden"} w-80 flex-col border-r border-neutral-800 bg-neutral-900/50 md:flex relative`}>
         {/* Sidebar Header */}
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
           <div className="flex items-center gap-3">
@@ -523,6 +527,59 @@ export function SignalShell() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Floating Action Button */}
+        <div className="absolute bottom-6 right-6 z-40 flex flex-col items-end">
+          <AnimatePresence>
+            {isFabOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                transition={{ duration: 0.15 }}
+                className="mb-4 flex flex-col gap-2 rounded-xl border border-neutral-800 bg-neutral-900 p-2 shadow-xl"
+              >
+                <button
+                  onClick={() => {
+                    setIsFabOpen(false);
+                    setShowNewContact(true);
+                  }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-200 transition-colors hover:bg-neutral-800"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800">
+                    <UserPlus className="h-4 w-4 text-blue-400" />
+                  </div>
+                  New Contact
+                </button>
+                <button
+                  onClick={() => {
+                    setIsFabOpen(false);
+                    setShowNewGroup(true);
+                  }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-200 transition-colors hover:bg-neutral-800"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800">
+                    <Users className="h-4 w-4 text-blue-400" />
+                  </div>
+                  New Group
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button
+            onClick={() => setIsFabOpen(!isFabOpen)}
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-blue-500 hover:scale-105 active:scale-95"
+            aria-label="New chat options"
+          >
+            <motion.div
+              animate={{ rotate: isFabOpen ? 45 : 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <Plus className="h-6 w-6" />
+            </motion.div>
+          </button>
         </div>
       </aside>
 

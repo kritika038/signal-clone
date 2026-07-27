@@ -109,3 +109,34 @@ async def global_search(
             "messages": [format_message(message) for message in messages],
         },
     }
+
+@router.get("/phone", response_model=dict[str, Any])
+async def search_by_phone(
+    q: str = Query(..., min_length=1),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    user_query = (
+        select(User)
+        .where(
+            and_(
+                User.deleted_at.is_(None),
+                User.phone == q
+            )
+        )
+    )
+    user_result = await db.execute(user_query)
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        return {"success": True, "data": None}
+
+    return {
+        "success": True,
+        "data": {
+            "id": str(user.id),
+            "username": user.username,
+            "display_name": user.display_name,
+            "phone": user.phone,
+        },
+    }
