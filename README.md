@@ -21,11 +21,10 @@
 ## 🚀 Live Demo & Test Accounts
 
 You can test the application live without installing it locally:
-- **Frontend URL:** [https://signal-clone-hzmyyx7qq-kritikas-projects-85137cfb.vercel.app/](https://signal-clone-hzmyyx7qq-kritikas-projects-85137cfb.vercel.app/)
+- **Frontend URL:** [https://signal-clone-r4hxsfh8u-kritikas-projects-85137cfb.vercel.app/](https://signal-clone-hzmyyx7qq-kritikas-projects-85137cfb.vercel.app/)
 
 **Demo Accounts (OTP is always `123456`):**
 - Phone: `+1234567890`
-- Phone: `+2345678901`
 
 ---
 
