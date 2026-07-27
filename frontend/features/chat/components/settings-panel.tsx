@@ -183,8 +183,10 @@ export function SettingsPanel() {
                         try {
                           const { uploadMedia } = await import("@/services/chat");
                           const data = await uploadMedia(accessToken!, file);
-                          if (data?.url) {
-                            form.setValue("avatar_url", data.url as string, { shouldDirty: true });
+                          const url = data?.playback_url || data?.url;
+                          if (url) {
+                            form.setValue("avatar_url", url as string, { shouldDirty: true });
+                            profileMutation.mutate(form.getValues());
                           }
                         } catch (err) {
                           useSignalStore.getState().setFeatureNotice("Failed to upload avatar");

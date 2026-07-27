@@ -109,6 +109,16 @@ def create_app() -> socketio.ASGIApp:
     app.include_router(devices.router, prefix=settings.API_V1_STR)
     app.include_router(search.router, prefix=settings.API_V1_STR)
 
+    # Mount static files for media uploads
+    from fastapi.staticfiles import StaticFiles
+    import os
+    os.makedirs(settings.STORAGE_LOCAL_PATH, exist_ok=True)
+    app.mount(
+        settings.STORAGE_PUBLIC_BASE_URL,
+        StaticFiles(directory=settings.STORAGE_LOCAL_PATH),
+        name="attachments"
+    )
+
 
     @app.get("/", tags=["System"])
     async def root():

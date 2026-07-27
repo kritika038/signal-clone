@@ -1,4 +1,10 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://signal-clone-backend-xja6.onrender.com";
+export const API_URL = (() => {
+  let url = process.env.NEXT_PUBLIC_API_URL || "https://signal-clone-backend-xja6.onrender.com";
+  if (url.endsWith("/api/v1")) url = url.slice(0, -7);
+  if (url.endsWith("/api/v1/")) url = url.slice(0, -8);
+  if (url.endsWith("/")) url = url.slice(0, -1);
+  return url;
+})();
 
 export class ApiError extends Error {
   status: number;

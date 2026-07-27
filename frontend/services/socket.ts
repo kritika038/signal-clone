@@ -3,7 +3,12 @@ import { API_URL } from "@/services/api";
 
 class SocketService {
   private socket: Socket | null = null;
-  private url = process.env.NEXT_PUBLIC_WS_URL || API_URL;
+  private url = (() => {
+    let base = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || API_URL;
+    if (base.endsWith("/api/v1")) base = base.slice(0, -7);
+    if (base.endsWith("/api/v1/")) base = base.slice(0, -8);
+    return base;
+  })();
 
   connect(token?: string) {
     if (this.socket) {
