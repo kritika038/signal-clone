@@ -270,9 +270,21 @@ export function SignalShell() {
           throw new Error("All attachments failed to upload.");
       }
 
+      let messageType = "TEXT";
+      if (uploadedAttachments.length > 0) {
+        const mimeType = (uploadedAttachments[0] as any).mime_type || "";
+        if (mimeType.startsWith("image/")) {
+          messageType = "IMAGE";
+        } else if (mimeType.startsWith("video/")) {
+          messageType = "VIDEO";
+        } else {
+          messageType = "FILE";
+        }
+      }
+
       return sendMessage(accessToken, activeConversationId, {
         content: payload.content || null, 
-        message_type: uploadedAttachments.length > 0 ? "image" : "text",
+        message_type: messageType,
         reply_to_id: payload.replyToId,
         attachments: uploadedAttachments,
         client_message_id: payload.clientMessageId,
@@ -288,7 +300,7 @@ export function SignalShell() {
         conversation_id: activeConversationId,
         sender_id: currentUserId,
         content: payload.content || null,
-        message_type: payload.attachments.length > 0 ? "image" : "text",
+        message_type: payload.attachments.length > 0 ? (payload.attachments[0].type === "video" ? "VIDEO" : payload.attachments[0].type === "image" ? "IMAGE" : "FILE") : "TEXT",
 
         reply_to_id: payload.replyToId,
         is_outgoing: true,
@@ -341,7 +353,7 @@ export function SignalShell() {
           return { ...old, pages: newPages };
         });
       }
-      toast.error("Message or upload failed");
+      toast.error(error.message || "Message validation failed");
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -355,6 +367,9 @@ export function SignalShell() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
     },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to edit message");
+    }
   });
 
   const deleteMessageMutation = useMutation({
@@ -364,6 +379,9 @@ export function SignalShell() {
       await queryClient.invalidateQueries({ queryKey: ["messages", activeConversationId] });
       await queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete message");
+    }
   });
 
   const handleLogout = async () => {
@@ -579,31 +597,44 @@ export function SignalShell() {
                 conversations.map((conversation) => (
                   <button
                     key={conversation.id}
-                    className={`flex w-full items-center gap-3 rounded-md px-2 py-2 transition-colors ${
-                      activeConversationId === conversation.id ? "bg-signal-blue-500 text-white" : "hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble"
+                    className={`flex w-full items-center gap-3 rounded-md px-2 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-signal-blue-500 ${
+                      activeConversationId === conversation.id 
+                        ? "bg-signal-blue-500 text-white" 
+                        : "hover:bg-neutral-100 dark:hover:bg-signal-dark-bubble"
                     }`}
                     onClick={() => selectConversation(conversation.id)}
                   >
-                    <div
-                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                        activeConversationId === conversation.id ? "bg-black/5 dark:bg-signal-dark-sidebar/5 dark:bg-signal-dark-sidebar/10 dark:bg-signal-dark-sidebar/5 dark:bg-signal-dark-sidebar/10 dark:bg-white/20 text-white" : "bg-signal-blue-500/20 text-signal-blue-400"
-                      }`}
-                    >
-                      {conversation.avatar}
+                    <div className="relative shrink-0">
+                      <div
+                        className={`flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold shadow-sm ${
+                          activeConversationId === conversation.id 
+                            ? "bg-white/20 text-white" 
+                            : "bg-signal-blue-500/10 text-signal-blue-500"
+                        }`}
+                      >
+                        {conversation.avatar}
+                      </div>
+                      {conversation.kind === "direct" && conversation.members[0]?.status === "online" && (
+                        <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-signal-dark-sidebar bg-green-500 ${activeConversationId === conversation.id ? 'border-signal-blue-500' : ''}`} />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1 text-left">
-                      <div className="flex justify-between">
-                        <span className="truncate text-[15px] font-medium">{conversation.title}</span>
-                        <span className={`shrink-0 text-xs ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500 dark:text-signal-dark-textSecondary"}`}>
+                      <div className="flex justify-between items-baseline">
+                        <span className="truncate text-[14px] font-medium leading-tight">{conversation.title}</span>
+                        <span className={`shrink-0 text-[11px] font-medium tracking-wide ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500 dark:text-signal-dark-textSecondary"}`}>
                           {formatSidebarTime(conversation.lastMessageAt)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center mt-1">
-                        <p className={`truncate text-sm pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-600 dark:text-signal-dark-textSecondary"}`}>
+                        <p className={`truncate text-[13px] pr-2 ${activeConversationId === conversation.id ? "text-blue-100" : "text-neutral-500 dark:text-signal-dark-textSecondary"}`}>
                           {conversation.lastMessage || "No messages yet"}
                         </p>
                         {conversation.unreadCount > 0 && (
-                          <div className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-signal-blue-500 px-1.5 text-[11px] font-medium text-white">
+                          <div className={`flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-medium ${
+                            activeConversationId === conversation.id 
+                              ? "bg-white text-signal-blue-500" 
+                              : "bg-signal-blue-500 text-white"
+                          }`}>
                             {conversation.unreadCount}
                           </div>
                         )}
@@ -679,27 +710,34 @@ export function SignalShell() {
         {activeConversationId ? (
           <>
             {/* Chat Header */}
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 dark:border-signal-dark-bubble bg-neutral-50 dark:bg-signal-dark-header px-4">
+            <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-neutral-200/50 dark:border-signal-dark-bubble bg-white/80 dark:bg-signal-dark-header/90 px-4 backdrop-blur-md">
               <button 
-                className="flex items-center gap-3 text-left hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 p-1.5 -ml-1.5 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center gap-3 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800/50 p-1.5 -ml-1.5 rounded-lg transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-signal-blue-500"
                 onClick={() => setShowConversationInfo(true)}
               >
                 <div className="flex items-center gap-3">
                   <Button className="md:hidden" size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleSidebar(); }}>
                     <Menu className="h-5 w-5" />
                   </Button>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-signal-blue-500/20 text-sm font-semibold text-signal-blue-400">
-                    {activeConversation?.avatar}
+                  <div className="relative">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-blue-500/10 text-sm font-semibold text-signal-blue-500 shadow-sm">
+                      {activeConversation?.avatar}
+                    </div>
+                    {activeConversation?.kind === "direct" && activeConversation.members[0]?.status === "online" && (
+                      <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-signal-dark-header bg-green-500" />
+                    )}
                   </div>
                   <div>
-                    <h2 className="text-[15px] font-medium text-neutral-900 dark:text-white">{activeConversation?.title}</h2>
-                    <p className="text-xs text-neutral-500 dark:text-signal-dark-textSecondary">
+                    <h2 className="text-[15px] font-medium text-neutral-900 dark:text-white leading-tight">{activeConversation?.title}</h2>
+                    <p className="text-[12px] text-neutral-500 dark:text-signal-dark-textSecondary mt-0.5">
                       {typingUsers.size > 0 ? (
-                        <span className="text-signal-blue-400">{typingString}</span>
+                        <span className="text-signal-blue-500 font-medium">{typingString}</span>
                       ) : conversationDetailQuery.data?.type === "GROUP" ? (
                         `${conversationDetailQuery.data.members.length} members`
-                      ) : (
+                      ) : activeConversation?.members[0]?.status === "online" ? (
                         "Online"
+                      ) : (
+                        "Offline"
                       )}
                     </p>
                   </div>
@@ -741,81 +779,95 @@ export function SignalShell() {
                       new Date(mappedMessages[index + 1]!.timestamp).toDateString() !==
                         new Date(message.timestamp).toDateString();
 
+                    const isNextSame = index > 0 && mappedMessages[index - 1]?.senderId === message.senderId;
+                    const isPrevSame = index < mappedMessages.length - 1 && mappedMessages[index + 1]?.senderId === message.senderId;
+
                     const isGroup = activeConversation?.kind === "group";
-                    const senderName = isGroup && !message.isOutgoing
+                    const senderName = isGroup && !message.isOutgoing && !isPrevSame
                       ? activeConversation?.members.find((m) => m.id === message.senderId)?.name
                       : null;
+
+                    const marginClass = isNextSame ? "mt-0.5" : "mt-3";
+                    
+                    const bubbleRadiusClass = message.isOutgoing
+                      ? `rounded-2xl ${!isNextSame ? "rounded-br-sm" : ""} ${isPrevSame ? "rounded-tr-md" : ""}`
+                      : `rounded-2xl ${!isNextSame ? "rounded-bl-sm" : ""} ${isPrevSame ? "rounded-tl-md" : ""}`;
 
                     return (
                       <div key={message.id} className="flex flex-col-reverse">
                         <motion.div
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`flex ${message.isOutgoing ? "justify-end" : "justify-start"} mt-1 group`}
+                          className={`flex ${message.isOutgoing ? "justify-end" : "justify-start"} ${marginClass} group`}
                         >
-                          <div className="flex flex-col">
+                          <div className={`flex flex-col max-w-[85%] ${message.isOutgoing ? "items-end" : "items-start"}`}>
                             {senderName && (
-                              <span className="mb-0.5 ml-3.5 text-[11px] font-medium text-neutral-500 dark:text-signal-dark-textSecondary">
+                              <span className="mb-1 ml-1 text-[12px] font-semibold text-neutral-500 dark:text-signal-dark-textSecondary">
                                 {senderName}
                               </span>
                             )}
                             <div
-                              className={`relative max-w-[85%] rounded-[18px] px-3 py-1.5 text-[15px] leading-relaxed shadow-sm ${
+                              className={`relative px-3 py-1.5 text-[15px] leading-[1.35] shadow-sm ${bubbleRadiusClass} ${
                               message.isOutgoing
-                                ? "rounded-br-sm bg-signal-blue-500 text-white"
-                                : "rounded-bl-sm bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-900 dark:text-white"
+                                ? "bg-signal-blue-500 text-white"
+                                : "bg-neutral-200 dark:bg-[#2B2B2B] text-neutral-900 dark:text-neutral-50"
                             }`}
                           >
                             {quoted && (
                               <button
-                                className="mb-2 block w-full rounded-md border-l-2 border-white/20 bg-black/5 dark:bg-signal-dark-sidebar/5 dark:bg-signal-dark-sidebar/10 px-2 py-1 text-left text-xs text-black/80 dark:text-black/80 dark:text-white/80"
+                                className={`mb-1 block w-full rounded-md border-l-[3px] border-white/30 px-2 py-1 text-left text-xs ${message.isOutgoing ? "bg-black/10 text-white" : "bg-black/5 dark:bg-black/20 text-black/80 dark:text-white/80"}`}
                                 onClick={() => setReplyTarget(quoted.id)}
                               >
                                 <span className="block font-semibold">{quoted.isOutgoing ? "You" : activeConversation?.title}</span>
-                                <span className="truncate block">{quoted.content}</span>
+                                <span className="truncate block opacity-90">{quoted.content}</span>
                               </button>
                             )}
-                            <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                            <div className={`mt-0.5 flex items-center justify-end gap-1.5 text-[10px] ${message.isOutgoing ? "text-blue-200" : "text-neutral-500 dark:text-signal-dark-textSecondary"}`}>
-                              {message.isEdited && <span>Edited</span>}
-                              <span>{formatMessageTime(message.timestamp)}</span>
-                              {message.isOutgoing && (
-                                <span className={`flex items-center ml-1 ${message.status === "read" ? "text-white drop-shadow-sm" : message.status === "failed" ? "text-red-400" : "text-blue-200"}`}>
-                                  {message.status === "failed" ? "Failed" : 
-                                   message.status === "sending" ? <Clock className="h-3.5 w-3.5 opacity-70" /> :
-                                   message.status === "sent" ? <Check className="h-3.5 w-3.5 opacity-70" /> :
-                                   message.status === "delivered" ? <CheckCheck className="h-3.5 w-3.5 opacity-70" /> :
-                                   <CheckCheck className="h-3.5 w-3.5 text-white stroke-[3]" /> /* read */}
-                                </span>
-                              )}
-                              {message.status === "failed" && (
-                                <button className="ml-2 text-white bg-white/20 px-2 py-0.5 rounded-full text-[10px] hover:bg-white/30 transition-colors" onClick={() => {
-                                  // Delete the failed message optimistic update
+                            <div className="flex flex-wrap items-end gap-x-2 gap-y-0.5">
+                              <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                              
+                              {/* Inline Timestamp inside the bubble */}
+                              <div className={`flex shrink-0 items-center gap-1 text-[11px] font-medium ml-auto mt-1 opacity-70 ${message.isOutgoing ? "text-blue-100" : "text-neutral-500 dark:text-neutral-400"}`}>
+                                {message.isEdited && <span>Edited</span>}
+                                <span>{formatMessageTime(message.timestamp)}</span>
+                                {message.isOutgoing && (
+                                  <span className={`flex items-center ${message.status === "failed" ? "text-red-300" : ""}`}>
+                                    {message.status === "failed" ? "Failed" : 
+                                     message.status === "sending" ? <Clock className="h-3.5 w-3.5" /> :
+                                     message.status === "sent" ? <Check className="h-3.5 w-3.5" /> :
+                                     message.status === "delivered" ? <CheckCheck className="h-3.5 w-3.5" /> :
+                                     <CheckCheck className="h-3.5 w-3.5 stroke-[3]" /> /* read */}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {message.status === "failed" && (
+                              <div className="mt-1 flex justify-end">
+                                <button className="text-white bg-black/20 px-2 py-1 rounded-md text-[11px] hover:bg-black/30 transition-colors" onClick={() => {
                                   queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
                                     if (!old) return old;
                                     const newPages = [...old.pages];
                                     newPages[0] = newPages[0].filter((m: any) => m.id !== message.id);
                                     return { ...old, pages: newPages };
                                   });
-                                  // Retry with the original content and attachments
                                   sendMessageMutation.mutate({ content: message.content || "", attachments: (message as any).rawAttachments || [], replyToId: message.quotedMessageId || null, clientMessageId: crypto.randomUUID() });
                                 }}>
-                                  Retry
+                                  Retry Send
                                 </button>
-                              )}
-                            </div>
+                              </div>
+                            )}
                             
                             {/* Message Actions (Hover) */}
-                            <div className={`absolute ${message.isOutgoing ? "-left-24" : "-right-8"} top-1/2 hidden -translate-y-1/2 items-center gap-1 group-hover:flex`}>
-                              <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
+                            <div className={`absolute ${message.isOutgoing ? "-left-20" : "-right-8"} top-1/2 hidden -translate-y-1/2 items-center gap-1 group-hover:flex`}>
+                              <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-white shadow-sm" onClick={() => navigator.clipboard.writeText(message.content)} title="Copy">
                                 <Copy className="h-3 w-3" />
                               </button>
                               {message.isOutgoing && (
                                 <>
-                                  <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-black dark:hover:text-white" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
+                                  <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-black dark:hover:text-white shadow-sm" onClick={() => editMessageMutation.mutate({ messageId: message.id, content: `${message.content} (edited)` })} title="Edit">
                                     <Edit2 className="h-3 w-3" />
                                   </button>
-                                  <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-red-400" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
+                                  <button className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble p-1.5 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-red-400 shadow-sm" onClick={() => deleteMessageMutation.mutate({ messageId: message.id, deleteType: "everyone" })} title="Delete">
                                     <Trash2 className="h-3 w-3" />
                                   </button>
                                 </>
@@ -825,8 +877,8 @@ export function SignalShell() {
                           </div>
                         </motion.div>
                         {isOldestOfDay && (
-                          <div className="my-4 flex justify-center">
-                            <span className="rounded-full bg-neutral-200 dark:bg-signal-dark-bubble/60 px-3 py-1 text-xs font-medium text-neutral-600 dark:text-signal-dark-textSecondary backdrop-blur-sm">
+                          <div className="my-5 flex justify-center">
+                            <span className="rounded-full bg-neutral-200/80 dark:bg-signal-dark-bubble/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-signal-dark-textSecondary backdrop-blur-sm">
                               {new Date(message.timestamp).toLocaleDateString(undefined, {
                                 weekday: "long",
                                 month: "short",
@@ -855,15 +907,15 @@ export function SignalShell() {
             </div>
 
             {/* Chat Input */}
-            <div className="shrink-0 bg-neutral-50 dark:bg-signal-dark-header p-4">
+            <div className="sticky bottom-0 z-20 shrink-0 bg-white/90 dark:bg-signal-dark-bg/90 p-4 backdrop-blur-md">
               <div className="mx-auto max-w-3xl">
                 {replyMessage && (
-                  <div className="mb-2 flex items-center justify-between rounded-t-lg bg-neutral-200 dark:bg-signal-dark-bubble px-3 py-2 text-sm border-l-2 border-signal-blue-500">
+                  <div className="mb-2 flex items-center justify-between rounded-t-lg bg-neutral-100 dark:bg-[#232323] px-3 py-2 text-sm border-l-4 border-signal-blue-500">
                     <div>
-                      <span className="font-semibold text-signal-blue-400">Replying to {replyMessage.isOutgoing ? "yourself" : activeConversation?.title}</span>
-                      <p className="text-neutral-600 dark:text-signal-dark-textSecondary truncate max-w-sm">{replyMessage.content}</p>
+                      <span className="font-semibold text-signal-blue-500">{replyMessage.isOutgoing ? "You" : activeConversation?.title}</span>
+                      <p className="text-neutral-600 dark:text-signal-dark-textSecondary truncate max-w-sm mt-0.5">{replyMessage.content}</p>
                     </div>
-                    <Button size="sm" variant="ghost" className="h-6 text-neutral-600 dark:text-signal-dark-textSecondary" onClick={() => setReplyTarget(null)}>✕</Button>
+                    <Button size="sm" variant="ghost" className="h-6 w-6 rounded-full p-0 text-neutral-500 hover:text-neutral-900 dark:hover:text-white" onClick={() => setReplyTarget(null)}>✕</Button>
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
@@ -886,13 +938,13 @@ export function SignalShell() {
                     </div>
                   )}
                   <div className="flex items-end gap-2">
-                    <Button size="icon" variant="ghost" className="shrink-0 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-neutral-900 dark:hover:text-neutral-100" onClick={() => fileInputRef.current?.click()}>
-                      <Paperclip className="h-5 w-5" />
+                    <Button size="icon" variant="ghost" className="shrink-0 text-neutral-500 hover:text-signal-blue-500 hover:bg-signal-blue-50 dark:hover:bg-signal-blue-900/20" onClick={() => fileInputRef.current?.click()}>
+                      <Plus className="h-6 w-6" />
                     </Button>
-                    <div className="flex min-h-[44px] flex-1 items-end rounded-2xl bg-neutral-100 dark:bg-signal-dark-input px-3 py-1 shadow-sm focus-within:ring-1 focus-within:ring-signal-blue-500">
+                    <div className="flex min-h-[44px] flex-1 items-end rounded-[22px] bg-neutral-100 dark:bg-signal-dark-input px-3 py-1 outline-none focus-within:ring-2 focus-within:ring-signal-blue-500/50 transition-all">
                     <Textarea
-                      className="max-h-32 min-h-[36px] w-full resize-none border-0 bg-transparent py-2 text-[15px] placeholder:text-neutral-500 dark:text-white focus-visible:ring-0"
-                      placeholder="Write a message..."
+                      className="max-h-32 min-h-[36px] w-full resize-none border-0 bg-transparent py-2 text-[15px] placeholder:text-neutral-500 dark:text-white focus-visible:ring-0 signal-scrollbar"
+                      placeholder="Message"
                       value={composerText}
                       onChange={(e) => {
                         setComposerText(e.target.value);
@@ -915,12 +967,12 @@ export function SignalShell() {
                         }
                       }}
                     />
-                    <div className="relative">
-                      <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 text-neutral-600 dark:text-signal-dark-textSecondary hover:text-neutral-900 dark:hover:text-neutral-100" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+                    <div className="relative pb-0.5">
+                      <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
                         <Smile className="h-5 w-5" />
                       </Button>
                       {showEmojiPicker && (
-                        <div className="absolute bottom-12 right-0 z-50 shadow-premium-dark rounded-lg overflow-hidden">
+                        <div className="absolute bottom-12 right-0 z-50 shadow-premium-dark rounded-lg overflow-hidden border border-neutral-200 dark:border-signal-dark-bubble">
                           <EmojiPicker 
                             theme={(theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)) ? Theme.DARK : Theme.LIGHT}
                             onEmojiClick={(emojiData) => {
@@ -934,11 +986,11 @@ export function SignalShell() {
                   </div>
                   <Button
                     size="icon"
-                    className="shrink-0 rounded-full bg-signal-blue-500 hover:bg-blue-700"
+                    className="shrink-0 h-11 w-11 rounded-full bg-signal-blue-500 hover:bg-signal-blue-600 shadow-md transition-transform active:scale-95"
                     onClick={() => sendMessageMutation.mutate({ content: composerText, attachments: queuedAttachments, replyToId: replyToMessageId, clientMessageId: crypto.randomUUID() })}
                     disabled={!composerText.trim() && !queuedAttachments.length}
                   >
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white transform -rotate-90 translate-y-0.5"><path d="M22 12L3 20L6.5 12L3 4L22 12Z" fill="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white transform -rotate-90 translate-y-0.5 translate-x-0.5"><path d="M22 12L3 20L6.5 12L3 4L22 12Z" fill="currentColor"/></svg>
                   </Button>
                 </div>
                 </div>
@@ -946,12 +998,14 @@ export function SignalShell() {
             </div>
           </>
         ) : (
-          <div className="flex h-full flex-col items-center justify-center bg-white dark:bg-signal-dark-bg text-neutral-500 dark:text-signal-dark-textSecondary">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-signal-dark-sidebar dark:bg-signal-dark-bubble mb-6 shadow-inner">
-              <MessageSquarePlus className="h-8 w-8 text-neutral-700" />
+          <div className="flex h-full flex-col items-center justify-center bg-white dark:bg-signal-dark-bg">
+            <div className="flex h-32 w-32 items-center justify-center rounded-full bg-neutral-50 dark:bg-signal-dark-sidebar shadow-inner mb-6">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-neutral-100 dark:bg-signal-dark-bubble shadow-sm">
+                <MessageSquarePlus className="h-10 w-10 text-neutral-400 dark:text-neutral-600" />
+              </div>
             </div>
-            <p className="text-lg font-medium text-neutral-300">Signal Desktop Clone</p>
-            <p className="mt-2 max-w-sm text-center text-sm text-neutral-500 dark:text-signal-dark-textSecondary">Select a chat to start messaging.</p>
+            <h3 className="text-xl font-medium text-neutral-800 dark:text-white mb-2">Signal for Desktop</h3>
+            <p className="text-sm text-neutral-500 dark:text-signal-dark-textSecondary text-center max-w-sm">Select a contact to start a secure conversation or create a new group.</p>
           </div>
         )}
       </main>

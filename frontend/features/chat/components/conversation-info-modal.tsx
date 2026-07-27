@@ -152,26 +152,26 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-md flex flex-col max-h-[80vh] overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 shadow-2xl"
+            className="w-full max-w-md flex flex-col max-h-[85vh] overflow-hidden rounded-xl border border-neutral-200 dark:border-[#2B2B2B] bg-white dark:bg-signal-dark-bg shadow-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-neutral-800 shrink-0">
-              <h3 className="text-lg font-semibold text-neutral-100">
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-signal-dark-bubble shrink-0">
+              <h3 className="text-[15px] font-medium text-neutral-900 dark:text-white">
                 {isGroup ? "Group Info" : "Contact Info"}
               </h3>
-              <button onClick={handleClose} className="p-1 hover:bg-neutral-800 rounded-full text-neutral-400 transition-colors">
-                <X className="w-5 h-5" />
+              <button onClick={handleClose} className="p-1.5 hover:bg-neutral-100 dark:hover:bg-signal-dark-bubble rounded-md text-neutral-500 dark:text-signal-dark-textSecondary transition-colors">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Content area that scrolls */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-6 flex flex-col items-center border-b border-neutral-800 bg-neutral-900/50">
+            <div className="flex-1 overflow-y-auto signal-scrollbar">
+              <div className="p-6 flex flex-col items-center border-b border-neutral-200 dark:border-signal-dark-bubble bg-neutral-50/50 dark:bg-signal-dark-header/30">
                 <div className="relative group w-24 h-24 mb-4">
                   <div className="w-full h-full rounded-full bg-signal-blue-500/20 text-signal-blue-400 flex items-center justify-center text-3xl font-semibold overflow-hidden">
                     {conversation.avatar_url ? (
@@ -195,58 +195,58 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                 </div>
                 
                 {isEditing ? (
-                  <div className="flex items-center gap-2 w-full max-w-xs">
+                  <div className="flex items-center gap-2 w-full max-w-xs mt-2">
                     <Input 
                       value={editName} 
                       onChange={(e) => setEditName(e.target.value)}
-                      className="bg-neutral-950 border-neutral-700 h-9"
+                      className="bg-neutral-100 dark:bg-signal-dark-input border-none h-9 text-[15px] focus-visible:ring-1 focus-visible:ring-signal-blue-500"
                       placeholder="Group name"
                       autoFocus
                     />
                     <Button 
                       size="icon" 
-                      className="h-9 w-9 bg-signal-blue-500 hover:bg-blue-700 text-white shrink-0"
+                      className="h-9 w-9 bg-signal-blue-500 hover:bg-signal-blue-600 text-white shrink-0 shadow-sm"
                       onClick={() => updateMutation.mutate(editName)}
                       disabled={!editName.trim() || updateMutation.isPending}
                     >
                       {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-9 w-9 text-neutral-400 shrink-0" onClick={() => setIsEditing(false)}>
+                    <Button size="icon" variant="ghost" className="h-9 w-9 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-signal-dark-bubble shrink-0" onClick={() => setIsEditing(false)}>
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-xl font-bold text-neutral-100">{isGroup ? (conversation.name || "Unknown") : mappedConversation?.title || "Unknown"}</h2>
+                      <h2 className="text-xl font-semibold text-neutral-900 dark:text-white leading-none">{isGroup ? (conversation.name || "Unknown") : mappedConversation?.title || "Unknown"}</h2>
                       {isGroup && isAdmin && (
-                        <button onClick={() => { setEditName(conversation.name || ""); setIsEditing(true); }} className="text-neutral-500 hover:text-white transition-colors">
+                        <button onClick={() => { setEditName(conversation.name || ""); setIsEditing(true); }} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white transition-colors">
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
                     {isGroup && conversation.description && (
-                      <p className="text-sm text-neutral-400 text-center px-4 mt-2 mb-1">{conversation.description}</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center px-4 mt-2 mb-1">{conversation.description}</p>
                     )}
                     {!isGroup && mappedConversation?.members[0] && (
-                      <div className="flex flex-col items-center mt-2 text-center w-full max-w-xs space-y-3">
+                      <div className="flex flex-col items-center mt-3 text-center w-full max-w-xs space-y-3">
                         {mappedConversation.members[0].phone && (
-                          <div className="w-full bg-neutral-950 p-3 rounded-lg border border-neutral-800 flex flex-col">
-                            <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1 text-left">Phone</span>
-                            <span className="text-sm text-neutral-200 text-left font-mono">{mappedConversation.members[0].phone}</span>
+                          <div className="w-full bg-neutral-100 dark:bg-[#1C1C1C] p-3 rounded-lg flex flex-col shadow-sm">
+                            <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-500 uppercase tracking-wider mb-1 text-left">Phone</span>
+                            <span className="text-[15px] text-neutral-900 dark:text-neutral-200 text-left font-mono">{mappedConversation.members[0].phone}</span>
                           </div>
                         )}
                         {mappedConversation.members[0].about && (
-                          <div className="w-full bg-neutral-950 p-3 rounded-lg border border-neutral-800 flex flex-col">
-                            <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1 text-left">About</span>
-                            <span className="text-sm text-neutral-200 text-left">{mappedConversation.members[0].about}</span>
+                          <div className="w-full bg-neutral-100 dark:bg-[#1C1C1C] p-3 rounded-lg flex flex-col shadow-sm">
+                            <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-500 uppercase tracking-wider mb-1 text-left">About</span>
+                            <span className="text-[15px] text-neutral-900 dark:text-neutral-200 text-left">{mappedConversation.members[0].about}</span>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
                 )}
-                {isGroup && <p className="text-sm text-neutral-500 mt-1">{members.filter((m: any) => !m.left_at).length} members</p>}
+                {isGroup && <p className="text-sm text-neutral-500 mt-2 font-medium">{members.filter((m: any) => !m.left_at).length} members</p>}
               </div>
 
               {isGroup && (
