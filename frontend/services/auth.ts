@@ -101,6 +101,8 @@ export async function updateProfile(
   token: string,
   payload: {
     display_name?: string;
+    username?: string;
+    avatar_url?: string;
     bio?: string;
     theme?: string;
     privacy_read_receipts?: boolean;

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Laptop, MoonStar, Palette, Shield, Bell, HardDrive, Link2, PlayCircle, Info, ContactRound } from "lucide-react";
-import { startTransition, useState } from "react";
+import { startTransition, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -21,7 +21,9 @@ import type { SettingsSection, ThemeMode } from "@/types/chat";
 
 const schema = z.object({
   display_name: z.string().min(2),
+  username: z.string().min(3).max(30).optional(),
   bio: z.string().max(140).optional(),
+  avatar_url: z.string().optional(),
 });
 
 const sections: Array<{ id: SettingsSection; label: string; icon: typeof Palette }> = [
@@ -54,7 +56,9 @@ export function SettingsPanel() {
     resolver: zodResolver(schema),
     values: {
       display_name: user?.display_name || "",
+      username: user?.username || "",
       bio: user?.bio || "",
+      avatar_url: user?.avatar_url || "",
     },
   });
 
@@ -158,14 +162,56 @@ export function SettingsPanel() {
             </div>
           ) : null}
           {activeSection === "profile" ? (
-            <form className="space-y-4" onSubmit={form.handleSubmit((values) => profileMutation.mutate(values))}>
+            <div className="space-y-6">
               <Badge className="bg-neutral-800 text-neutral-300 hover:bg-neutral-800">Profile</Badge>
-              <Input className="bg-neutral-900 border-neutral-800 h-9" {...form.register("display_name")} placeholder="Display name" />
-              <Textarea className="bg-neutral-900 border-neutral-800 min-h-[100px]" {...form.register("bio")} placeholder="Write a short bio" />
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 h-9" type="submit" disabled={profileMutation.isPending}>
-                {profileMutation.isPending ? "Saving..." : "Save profile"}
-              </Button>
-            </form>
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative h-24 w-24 overflow-hidden rounded-full bg-neutral-800 flex items-center justify-center">
+                  {form.watch("avatar_url") ? (
+                    <img src={form.watch("avatar_url")} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl text-neutral-500">{user?.display_name?.slice(0, 2).toUpperCase()}</span>
+                  )}
+                  <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 opacity-0 transition hover:opacity-100">
+                    <span className="text-xs font-medium text-white">Change</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const { uploadMedia } = await import("@/services/chat");
+                          const data = await uploadMedia(accessToken!, file);
+                          if (data?.url) {
+                            form.setValue("avatar_url", data.url as string, { shouldDirty: true });
+                          }
+                        } catch (err) {
+                          useSignalStore.getState().setFeatureNotice("Failed to upload avatar");
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+              <form className="space-y-4" onSubmit={form.handleSubmit((values) => profileMutation.mutate(values))}>
+                <div className="space-y-1">
+                  <label className="text-xs text-neutral-400">Display Name</label>
+                  <Input className="bg-neutral-900 border-neutral-800 h-9" {...form.register("display_name")} placeholder="Display name" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-neutral-400">Username</label>
+                  <Input className="bg-neutral-900 border-neutral-800 h-9" {...form.register("username")} placeholder="Username" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-neutral-400">Bio</label>
+                  <Textarea className="bg-neutral-900 border-neutral-800 min-h-[80px]" {...form.register("bio")} placeholder="Write a short bio" />
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-9" type="submit" disabled={profileMutation.isPending || !form.formState.isDirty}>
+                  {profileMutation.isPending ? "Saving..." : "Save profile"}
+                </Button>
+              </form>
+            </div>
           ) : null}
 
           {activeSection === "appearance" ? (

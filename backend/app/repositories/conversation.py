@@ -8,6 +8,7 @@ from app.models.conversation import Conversation
 from app.models.conversation_member import ConversationMember
 from app.models.conversation_preference import ConversationPreference
 from app.models.enums import ConversationType, ConversationRole
+from app.models.message import Message
 from app.repositories.base import BaseRepository
 
 class ConversationRepository(BaseRepository[Conversation]):
@@ -45,7 +46,9 @@ class ConversationRepository(BaseRepository[Conversation]):
             .limit(limit)
             .options(
                 selectinload(Conversation.members).selectinload(ConversationMember.user),
-                selectinload(Conversation.last_message)
+                selectinload(Conversation.last_message).selectinload(Message.attachments),
+                selectinload(Conversation.last_message).selectinload(Message.reactions),
+                selectinload(Conversation.last_message).selectinload(Message.receipts)
             )
         )
         result = await self.db.execute(query)
@@ -78,6 +81,12 @@ class ConversationRepository(BaseRepository[Conversation]):
                 )
             )
             .order_by(desc(Conversation.last_activity_at))
+            .options(
+                selectinload(Conversation.members).selectinload(ConversationMember.user),
+                selectinload(Conversation.last_message).selectinload(Message.attachments),
+                selectinload(Conversation.last_message).selectinload(Message.reactions),
+                selectinload(Conversation.last_message).selectinload(Message.receipts)
+            )
         )
         result = await self.db.execute(query)
         return list(result.scalars().all())
@@ -95,7 +104,12 @@ class ConversationRepository(BaseRepository[Conversation]):
                     Conversation.deleted_at.is_(None)
                 )
             )
-            .options(selectinload(Conversation.members))
+            .options(
+                selectinload(Conversation.members).selectinload(ConversationMember.user),
+                selectinload(Conversation.last_message).selectinload(Message.attachments),
+                selectinload(Conversation.last_message).selectinload(Message.reactions),
+                selectinload(Conversation.last_message).selectinload(Message.receipts)
+            )
         )
         res = await self.db.execute(check_query)
         conversations = res.scalars().all()

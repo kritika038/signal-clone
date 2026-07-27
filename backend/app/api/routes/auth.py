@@ -1,5 +1,6 @@
 import uuid
 from typing import Optional
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, Request, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -254,6 +255,44 @@ async def refresh(
 
 @router.get("/me", status_code=status.HTTP_200_OK)
 async def me(user: User = Depends(get_current_user)):
+    return {
+        "success": True,
+        "data": format_user_data(user)
+    }
+
+class UserUpdateProfile(BaseModel):
+    username: str | None = None
+    display_name: str | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
+    theme: str | None = None
+
+@router.patch("/me", status_code=status.HTTP_200_OK)
+async def update_me(
+    update_in: UserUpdateProfile,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db)
+):
+    if update_in.username is not None:
+        if update_in.username != user.username:
+            # Check availability
+            from sqlalchemy import select
+            existing = await db.execute(select(User).where(User.username == update_in.username))
+            if existing.scalar_one_or_none():
+                raise APIException(status.HTTP_400_BAD_REQUEST, "USERNAME_TAKEN", "Username is already taken.")
+        user.username = update_in.username
+    
+    if update_in.display_name is not None:
+        user.display_name = update_in.display_name
+    if update_in.bio is not None:
+        user.bio = update_in.bio
+    if update_in.avatar_url is not None:
+        user.avatar_url = update_in.avatar_url
+    if update_in.theme is not None:
+        user.theme = update_in.theme
+
+    await db.commit()
+    await db.refresh(user)
     return {
         "success": True,
         "data": format_user_data(user)
