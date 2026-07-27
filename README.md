@@ -128,7 +128,7 @@ This project was built to address the complexities of modern real-time communica
 </details>
 
 <details>
-<summary><b>Real-Time Chat & Media Upload</b></summary>
+<summary><b>Real-Time Chat & Emoji</b></summary>
 <br>
 <i>Insert chat-screen.png here</i>
 </details>
