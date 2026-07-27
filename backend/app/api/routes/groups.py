@@ -174,6 +174,7 @@ async def remove_group_member(
     removed = await GroupRepository(db).remove_member(id, member_id)
     if not removed:
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
+    await db.commit()
     return {"success": True, "data": {"removed": True, "conversation_id": str(id), "member_id": str(member_id)}}
 
 
@@ -198,6 +199,7 @@ async def update_group_member_role(
     if not updated:
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
         
+    await db.commit()
     return {"success": True, "data": {"updated": True, "conversation_id": str(id), "member_id": str(member_id), "role": payload.role.value}}
 
 
@@ -211,4 +213,6 @@ async def leave_group(
     removed = await GroupRepository(db).remove_member(id, current_user.id)
     if not removed:
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
+    
+    await db.commit()
     return {"success": True, "data": {"left": True, "conversation_id": str(id)}}

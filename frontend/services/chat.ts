@@ -169,8 +169,10 @@ export async function deleteMessage(token: string, messageId: string, deleteType
 }
 
 export async function uploadMedia(token: string, file: File) {
+  console.log("[uploadMedia] called with file:", { name: file.name, type: file.type, size: file.size });
   const formData = new FormData();
   formData.append("file", file);
+  console.log("[uploadMedia] formData created, instanceof FormData:", formData instanceof FormData);
   return apiRequest<Record<string, unknown>>(`/api/v1/media/upload`, {
     method: "POST",
     token,

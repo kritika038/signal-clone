@@ -166,7 +166,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
             <div className="flex-1 overflow-y-auto">
               <div className="p-6 flex flex-col items-center border-b border-neutral-800 bg-neutral-900/50">
                 <div className="relative group w-24 h-24 mb-4">
-                  <div className="w-full h-full rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-3xl font-semibold overflow-hidden">
+                  <div className="w-full h-full rounded-full bg-signal-blue-500/20 text-signal-blue-400 flex items-center justify-center text-3xl font-semibold overflow-hidden">
                     {conversation.avatar_url ? (
                       <img src={`/api/v1/media/${conversation.avatar_url}`} alt="Avatar" className="w-full h-full object-cover" />
                     ) : isGroup ? (
@@ -198,7 +198,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                     />
                     <Button 
                       size="icon" 
-                      className="h-9 w-9 bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+                      className="h-9 w-9 bg-signal-blue-500 hover:bg-blue-700 text-white shrink-0"
                       onClick={() => updateMutation.mutate(editName)}
                       disabled={!editName.trim() || updateMutation.isPending}
                     >
@@ -231,7 +231,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Members</h4>
                     {isAdmin && !isAddingMember && (
-                      <Button size="sm" variant="ghost" className="h-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10" onClick={() => setIsAddingMember(true)}>
+                      <Button size="sm" variant="ghost" className="h-8 text-signal-blue-400 hover:text-blue-300 hover:bg-signal-blue-500/10" onClick={() => setIsAddingMember(true)}>
                         <UserPlus className="w-4 h-4 mr-2" /> Add
                       </Button>
                     )}
@@ -254,7 +254,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                       </div>
                       <div className="max-h-48 overflow-y-auto space-y-1">
                         {contactsQuery.isLoading ? (
-                          <div className="py-4 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-blue-500" /></div>
+                          <div className="py-4 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-signal-blue-500" /></div>
                         ) : filteredContacts.length === 0 ? (
                           <p className="py-4 text-center text-xs text-neutral-500">No contacts available to add.</p>
                         ) : (
@@ -268,7 +268,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                               </div>
                               <Button 
                                 size="sm" 
-                                className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white shrink-0" 
+                                className="h-7 text-xs bg-signal-blue-500 hover:bg-blue-700 text-white shrink-0" 
                                 onClick={() => addMemberMutation.mutate(contact.contact_user!.id)}
                                 disabled={addMemberMutation.isPending}
                               >
@@ -319,8 +319,8 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-neutral-500">@{member.user?.username}</span>
                                 {(member.role === "ADMIN" || member.role === "OWNER") && (
-                                  <span className="flex items-center text-[10px] uppercase font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                    <Shield className="w-3 h-3 mr-1" /> {member.role}
+                                  <span className="flex items-center text-[10px] uppercase font-bold text-signal-blue-400 bg-signal-blue-500/10 px-1.5 py-0.5 rounded">
+                                    <Shield className="w-3 h-3 mr-1" /> ADMIN
                                   </span>
                                 )}
                               </div>
@@ -332,7 +332,7 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="h-8 w-8 text-neutral-500 hover:text-blue-400 hover:bg-blue-950/30"
+                                  className="h-8 w-8 text-neutral-500 hover:text-signal-blue-400 hover:bg-blue-950/30"
                                   onClick={() => updateRoleMutation.mutate({ memberId: member.user_id, role: "ADMIN" })}
                                   title="Promote to Admin"
                                 >

@@ -54,6 +54,14 @@ const config: Config = {
         },
         // Premium Signal-like colors
         signal: {
+          dark: {
+            bg: "#121212",
+            sidebar: "#1B1B1B",
+            header: "#1A1A1A",
+            input: "#232323",
+            bubble: "#2B2B2B",
+            textSecondary: "#B3B3B3",
+          },
           blue: {
             50: "#eef4ff",
             100: "#d9e5fc",

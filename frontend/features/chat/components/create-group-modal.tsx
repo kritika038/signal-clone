@@ -135,7 +135,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                 <div className="flex-1 overflow-y-auto p-2">
                   {contactsQuery.isLoading ? (
                     <div className="flex justify-center p-4">
-                      <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                      <Loader2 className="w-6 h-6 animate-spin text-signal-blue-500" />
                     </div>
                   ) : filteredContacts.length === 0 ? (
                     <p className="p-4 text-center text-sm text-neutral-500">
@@ -157,7 +157,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 font-semibold text-white relative">
                               {u.display_name?.charAt(0).toUpperCase() || "?"}
                               {isSelected && (
-                                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 border border-neutral-900">
+                                <div className="absolute -bottom-1 -right-1 bg-signal-blue-500 rounded-full p-0.5 border border-neutral-900">
                                   <Check className="w-3 h-3 text-white" />
                                 </div>
                               )}
@@ -179,7 +179,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
 
                 <div className="p-4 border-t border-neutral-800">
                   <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-signal-blue-500 hover:bg-blue-700 text-white"
                     onClick={() => setStep("details")}
                     disabled={selectedContactIds.length === 0}
                   >
@@ -243,7 +243,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                     Back
                   </Button>
                   <Button
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 bg-signal-blue-500 hover:bg-blue-700 text-white"
                     onClick={() => createGroupMutation.mutate()}
                     disabled={!groupName.trim() || createGroupMutation.isPending || isUploading}
                   >

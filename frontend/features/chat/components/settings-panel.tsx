@@ -103,8 +103,8 @@ export function SettingsPanel() {
   }
 
   return (
-    <aside className="w-full md:w-[320px] shrink-0 border-l border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900">
-      <div className="flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4">
+    <aside className="w-full md:w-[320px] shrink-0 border-l border-neutral-200 dark:border-[#2B2B2B] bg-neutral-100 dark:bg-signal-dark-bubble">
+      <div className="flex h-14 items-center justify-between border-b border-neutral-200 dark:border-[#2B2B2B] px-4">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Settings</p>
           <h3 className="mt-1 text-lg font-semibold text-white">Your Signal workspace</h3>
@@ -115,13 +115,13 @@ export function SettingsPanel() {
       </div>
 
       <div className="flex h-[calc(100vh-56px)] flex-col">
-        <nav className="border-b border-neutral-200 dark:border-neutral-800 p-2 overflow-x-auto">
+        <nav className="border-b border-neutral-200 dark:border-[#2B2B2B] p-2 overflow-x-auto">
           <div className="flex space-x-1">
             {sections.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition ${
-                  activeSection === id ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100" : "text-neutral-500 dark:text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-800/50 hover:text-neutral-300"
+                  activeSection === id ? "bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-900 dark:text-white" : "text-neutral-500 dark:text-signal-dark-textSecondary hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble/50 hover:text-neutral-300"
                 }`}
                 onClick={() => startTransition(() => openSettings(id))}
                 type="button"
@@ -136,23 +136,23 @@ export function SettingsPanel() {
         <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-neutral-950">
           {activeSection === "contacts" ? (
             <div className="space-y-4">
-              <Badge className="bg-neutral-200 dark:bg-neutral-800 text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-800">Contacts</Badge>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">Add a contact using their Signal user ID.</p>
-              <Input className="bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 h-9" value={contactUserId} onChange={(event) => setContactUserId(event.target.value)} placeholder="Contact user ID" />
-              <Input className="bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 h-9" value={contactNickname} onChange={(event) => setContactNickname(event.target.value)} placeholder="Nickname (optional)" />
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 h-9" disabled={!contactUserId.trim() || contactMutation.isPending} onClick={() => contactMutation.mutate()} type="button">
+              <Badge className="bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble">Contacts</Badge>
+              <p className="text-sm text-neutral-600 dark:text-signal-dark-textSecondary">Add a contact using their Signal user ID.</p>
+              <Input className="bg-neutral-100 dark:bg-signal-dark-bubble border-neutral-200 dark:border-[#2B2B2B] h-9" value={contactUserId} onChange={(event) => setContactUserId(event.target.value)} placeholder="Contact user ID" />
+              <Input className="bg-neutral-100 dark:bg-signal-dark-bubble border-neutral-200 dark:border-[#2B2B2B] h-9" value={contactNickname} onChange={(event) => setContactNickname(event.target.value)} placeholder="Nickname (optional)" />
+              <Button className="w-full bg-signal-blue-500 hover:bg-blue-700 h-9" disabled={!contactUserId.trim() || contactMutation.isPending} onClick={() => contactMutation.mutate()} type="button">
                 {contactMutation.isPending ? "Adding…" : "Add contact"}
               </Button>
               <div className="space-y-2">
                 {contactsQuery.data?.map((contact) => (
-                  <div key={contact.id} className="flex flex-col gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 p-3 text-sm">
+                  <div key={contact.id} className="flex flex-col gap-2 rounded-lg border border-neutral-200 dark:border-[#2B2B2B] bg-neutral-100 dark:bg-signal-dark-bubble p-3 text-sm">
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-neutral-900 dark:text-neutral-200">{contact.nickname || contact.contact_user?.display_name || contact.contact_user?.username || contact.contact_user?.phone}</p>
-                      <p className="truncate text-xs text-neutral-500 dark:text-neutral-500">{contact.contact_user?.phone || contact.contact_user_id}</p>
+                      <p className="truncate font-medium text-neutral-900 dark:text-white">{contact.nickname || contact.contact_user?.display_name || contact.contact_user?.username || contact.contact_user?.phone}</p>
+                      <p className="truncate text-xs text-neutral-500 dark:text-signal-dark-textSecondary">{contact.contact_user?.phone || contact.contact_user_id}</p>
                     </div>
                     <div className="flex gap-2 w-full mt-1">
-                      <Button className="flex-1 h-8 bg-blue-600 hover:bg-blue-700 text-white" size="sm" onClick={() => startConversationMutation.mutate(contact.contact_user_id)} type="button">Chat</Button>
-                      <Button className="flex-1 h-8 bg-neutral-200 dark:bg-neutral-800 hover:bg-red-900/50 hover:text-red-400 text-neutral-600 dark:text-neutral-400" size="sm" variant="ghost" onClick={() => deleteContactMutation.mutate(contact.id)} type="button">Remove</Button>
+                      <Button className="flex-1 h-8 bg-signal-blue-500 hover:bg-blue-700 text-white" size="sm" onClick={() => startConversationMutation.mutate(contact.contact_user_id)} type="button">Chat</Button>
+                      <Button className="flex-1 h-8 bg-neutral-200 dark:bg-signal-dark-bubble hover:bg-red-900/50 hover:text-red-400 text-neutral-600 dark:text-signal-dark-textSecondary" size="sm" variant="ghost" onClick={() => deleteContactMutation.mutate(contact.id)} type="button">Remove</Button>
                     </div>
                   </div>
                 ))}
@@ -163,13 +163,13 @@ export function SettingsPanel() {
           ) : null}
           {activeSection === "profile" ? (
             <div className="space-y-6">
-              <Badge className="bg-neutral-200 dark:bg-neutral-800 text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-800">Profile</Badge>
+              <Badge className="bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble">Profile</Badge>
               <div className="flex flex-col items-center gap-4">
-                <div className="relative h-24 w-24 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                <div className="relative h-24 w-24 overflow-hidden rounded-full bg-neutral-200 dark:bg-signal-dark-bubble flex items-center justify-center">
                   {form.watch("avatar_url") ? (
                     <img src={form.watch("avatar_url")} alt="Avatar" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-2xl text-neutral-500 dark:text-neutral-500">{user?.display_name?.slice(0, 2).toUpperCase()}</span>
+                    <span className="text-2xl text-neutral-500 dark:text-signal-dark-textSecondary">{user?.display_name?.slice(0, 2).toUpperCase()}</span>
                   )}
                   <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/50 opacity-0 transition hover:opacity-100">
                     <span className="text-xs font-medium text-white">Change</span>
@@ -198,18 +198,18 @@ export function SettingsPanel() {
               </div>
               <form className="space-y-4" onSubmit={form.handleSubmit((values) => profileMutation.mutate(values))}>
                 <div className="space-y-1">
-                  <label className="text-xs text-neutral-600 dark:text-neutral-400">Display Name</label>
-                  <Input className="bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 h-9" {...form.register("display_name")} placeholder="Display name" />
+                  <label className="text-xs text-neutral-600 dark:text-signal-dark-textSecondary">Display Name</label>
+                  <Input className="bg-neutral-100 dark:bg-signal-dark-bubble border-neutral-200 dark:border-[#2B2B2B] h-9" {...form.register("display_name")} placeholder="Display name" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-neutral-600 dark:text-neutral-400">Username</label>
-                  <Input className="bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 h-9" {...form.register("username")} placeholder="Username" />
+                  <label className="text-xs text-neutral-600 dark:text-signal-dark-textSecondary">Username</label>
+                  <Input className="bg-neutral-100 dark:bg-signal-dark-bubble border-neutral-200 dark:border-[#2B2B2B] h-9" {...form.register("username")} placeholder="Username" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-neutral-600 dark:text-neutral-400">Bio</label>
-                  <Textarea className="bg-neutral-100 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 min-h-[80px]" {...form.register("bio")} placeholder="Write a short bio" />
+                  <label className="text-xs text-neutral-600 dark:text-signal-dark-textSecondary">Bio</label>
+                  <Textarea className="bg-neutral-100 dark:bg-signal-dark-bubble border-neutral-200 dark:border-[#2B2B2B] min-h-[80px]" {...form.register("bio")} placeholder="Write a short bio" />
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-9" type="submit" disabled={profileMutation.isPending || !form.formState.isDirty}>
+                <Button className="w-full bg-signal-blue-500 hover:bg-blue-700 h-9" type="submit" disabled={profileMutation.isPending || !form.formState.isDirty}>
                   {profileMutation.isPending ? "Saving..." : "Save profile"}
                 </Button>
               </form>
@@ -218,20 +218,20 @@ export function SettingsPanel() {
 
           {activeSection === "appearance" ? (
             <div className="space-y-4">
-              <Badge className="bg-neutral-200 dark:bg-neutral-800 text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-800">Appearance</Badge>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">Switch between light, dark, or system theme modes.</p>
+              <Badge className="bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble">Appearance</Badge>
+              <p className="text-sm text-neutral-600 dark:text-signal-dark-textSecondary">Switch between light, dark, or system theme modes.</p>
               <div className="grid gap-2">
                 {(["light", "dark", "system"] as ThemeMode[]).map((mode) => (
                   <button
                     key={mode}
                     className={`rounded-lg border px-3 py-3 text-left transition ${
-                      theme === mode ? "border-blue-500 bg-blue-500/10" : "border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-800"
+                      theme === mode ? "border-signal-blue-500 bg-signal-blue-500/10" : "border-neutral-200 dark:border-[#2B2B2B] bg-neutral-100 dark:bg-signal-dark-bubble hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble"
                     }`}
                     onClick={() => setTheme(mode)}
                     type="button"
                   >
-                    <div className="font-medium capitalize text-neutral-900 dark:text-neutral-200 text-sm">{mode}</div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
+                    <div className="font-medium capitalize text-neutral-900 dark:text-white text-sm">{mode}</div>
+                    <div className="text-xs text-neutral-500 dark:text-signal-dark-textSecondary mt-1">
                       {mode === "system" ? "Match the device preference." : `Use ${mode} appearance.`}
                     </div>
                   </button>
@@ -284,19 +284,19 @@ export function SettingsPanel() {
 
 function Section({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 p-4">
-      <h4 className="font-medium text-neutral-900 dark:text-neutral-200 text-sm">{title}</h4>
-      <p className="mt-1.5 text-xs leading-5 text-neutral-600 dark:text-neutral-400">{body}</p>
+    <div className="rounded-lg border border-neutral-200 dark:border-[#2B2B2B] bg-neutral-100 dark:bg-signal-dark-bubble p-4">
+      <h4 className="font-medium text-neutral-900 dark:text-white text-sm">{title}</h4>
+      <p className="mt-1.5 text-xs leading-5 text-neutral-600 dark:text-signal-dark-textSecondary">{body}</p>
     </div>
   );
 }
 
 function ComingSoon({ title, body }: { title: string; body: string }) {
   return (
-    <div className="flex h-full min-h-[240px] flex-col items-center justify-center rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-900/50 p-6 text-center">
-      <Badge className="bg-neutral-200 dark:bg-neutral-800 text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-neutral-800">{title}</Badge>
-      <h4 className="mt-4 text-lg font-semibold text-neutral-900 dark:text-neutral-200">Coming Soon</h4>
-      <p className="mt-2 max-w-[200px] text-xs leading-5 text-neutral-500 dark:text-neutral-500">{body}</p>
+    <div className="flex h-full min-h-[240px] flex-col items-center justify-center rounded-lg border border-dashed border-neutral-200 dark:border-[#2B2B2B] bg-neutral-50/50 dark:bg-signal-dark-sidebar dark:bg-signal-dark-bubble/50 p-6 text-center">
+      <Badge className="bg-neutral-200 dark:bg-signal-dark-bubble text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-200 dark:bg-signal-dark-bubble">{title}</Badge>
+      <h4 className="mt-4 text-lg font-semibold text-neutral-900 dark:text-white">Coming Soon</h4>
+      <p className="mt-2 max-w-[200px] text-xs leading-5 text-neutral-500 dark:text-signal-dark-textSecondary">{body}</p>
     </div>
   );
 }

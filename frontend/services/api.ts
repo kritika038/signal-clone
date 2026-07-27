@@ -26,20 +26,28 @@ export async function apiRequest<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
+    const isFormData = typeof FormData !== "undefined" && (init.body instanceof FormData || (init.body && typeof init.body === 'object' && init.body.constructor && init.body.constructor.name === 'FormData'));
     const computedHeaders: HeadersInit = {
       ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     };
 
+    console.log("[api.ts] fetch ->", `${API_URL}${path}`, {
+      method: init.method || "GET",
+      isFormData,
+      computedHeaders,
+    });
+
     response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: computedHeaders,
     });
+    console.log("[api.ts] fetch response ->", response.status, response.statusText);
   } catch (error) {
-    // This catches network errors and CORS errors (e.g. TypeError: Failed to fetch)
-    throw new ApiError("Network error. The backend may be unreachable or blocked by CORS.", 0);
+    console.error("[api.ts] fetch error ->", error);
+    const errorMessage = `Network error: ${error instanceof Error ? error.message : String(error)}`;
+    throw new ApiError(errorMessage, 0);
   }
 
   const payload = (await response.json().catch(() => null)) as
@@ -92,6 +100,7 @@ export async function apiRequest<T>(
       errorMessage = payload.message;
     }
 
+    console.error(`[api.ts] Backend Error ${response.status}:`, errorMessage, payload);
     throw new ApiError(errorMessage, response.status);
   }
 

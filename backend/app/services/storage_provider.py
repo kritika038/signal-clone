@@ -37,10 +37,12 @@ class StorageProvider(ABC):
         raise NotImplementedError
 
     def validate_file(self, file_bytes: bytes, mime_type: str) -> None:
+        from fastapi import status
+        from app.core.exceptions import APIException
         if len(file_bytes) > settings.STORAGE_MAX_FILE_SIZE_BYTES:
-            raise ValueError("File exceeds maximum limit of 10MB")
+            raise APIException(status.HTTP_400_BAD_REQUEST, "FILE_TOO_LARGE", "File exceeds maximum limit of 10MB")
         if mime_type.lower() not in settings.STORAGE_ALLOWED_MIME_TYPES:
-            raise ValueError(f"Mime-type '{mime_type}' is not supported")
+            raise APIException(status.HTTP_400_BAD_REQUEST, "UNSUPPORTED_MIME_TYPE", f"Mime-type '{mime_type}' is not supported")
 
     async def run_security_hooks(self, file_bytes: bytes, filename: str) -> None:
         await self._virus_scanner.scan(file_bytes, filename)
