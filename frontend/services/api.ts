@@ -26,13 +26,16 @@ export async function apiRequest<T>(
 ): Promise<T> {
   let response: Response;
   try {
+    const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
+    const computedHeaders: HeadersInit = {
+      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    };
+
     response = await fetch(`${API_URL}${path}`, {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...headers,
-      },
+      headers: computedHeaders,
     });
   } catch (error) {
     // This catches network errors and CORS errors (e.g. TypeError: Failed to fetch)

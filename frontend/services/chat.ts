@@ -171,22 +171,11 @@ export async function deleteMessage(token: string, messageId: string, deleteType
 export async function uploadMedia(token: string, file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch(`${API_URL}/api/v1/media/upload`, {
+  return apiRequest<Record<string, unknown>>(`/api/v1/media/upload`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    token,
     body: formData,
   });
-  const payload = (await response.json()) as {
-    success?: boolean;
-    data?: Record<string, unknown>;
-    error?: { message?: string };
-  };
-  if (!response.ok || payload.success === false || !payload.data) {
-    throw new Error(payload.error?.message || "Upload failed");
-  }
-  return payload.data;
 }
 
 export async function createGroup(

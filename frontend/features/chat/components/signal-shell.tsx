@@ -408,6 +408,9 @@ export function SignalShell() {
     socket.on("typing.start", handleTypingStart);
     socket.on("typing.stop", handleTypingStop);
     socket.emit("heartbeat");
+    const heartbeatInterval = setInterval(() => {
+      socket.emit("heartbeat");
+    }, 30000);
     
     // Note: To properly mark all previous messages as read, we'd iterate unread ones.
     // For now, we handle it actively as they arrive in handleIncomingChange.
@@ -422,6 +425,7 @@ export function SignalShell() {
       socket.off("message.read", handleIncomingChange);
       socket.off("typing.start", handleTypingStart);
       socket.off("typing.stop", handleTypingStop);
+      clearInterval(heartbeatInterval);
     };
   }, [accessToken, activeConversationId, currentUserId, queryClient, setSocketState]);
 
