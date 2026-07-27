@@ -429,12 +429,15 @@ async def test_attachment_handling_and_validation(db_engine, test_db: AsyncSessi
 
     # 2. Upload file exceeding 10MB limit (e.g. 11MB)
     large_bytes = b"a" * (11 * 1024 * 1024)
-    with pytest.raises(ValueError, match="File exceeds maximum limit of 10MB"):
+    from app.core.exceptions import APIException
+    with pytest.raises(APIException) as exc_info:
         await provider.upload_file(large_bytes, "heavy.mp4", "video/mp4")
+    assert exc_info.value.code == "FILE_TOO_LARGE"
 
     # 3. Upload unsupported mime type
-    with pytest.raises(ValueError, match="is not supported"):
-        await provider.upload_file(file_bytes, "script.exe", "application/octet-stream")
+    with pytest.raises(APIException) as exc_info:
+        await provider.upload_file(file_bytes, "invalid.heic", "image/heic")
+    assert exc_info.value.code == "UNSUPPORTED_MIME_TYPE"
 
     # Clean up uploaded files
     await provider.delete_file(upload_res["storage_key"])
