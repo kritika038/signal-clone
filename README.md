@@ -118,25 +118,25 @@ This project was built to address the complexities of modern real-time communica
 <details>
 <summary><b>Authentication & Registration</b></summary>
 <br>
-<i>Insert auth-screen.png here</i>
+<img src="./docs/images/auth-screen.png" alt="Authentication Screen" width="800">
 </details>
 
 <details>
 <summary><b>Conversation List & Main Layout</b></summary>
 <br>
-<i>Insert main-layout.png here</i>
+<img src="./docs/images/main-layout.png" alt="Main Layout" width="800">
 </details>
 
 <details>
 <summary><b>Real-Time Chat & Emoji</b></summary>
 <br>
-<i>Insert chat-screen.png here</i>
+<img src="./docs/images/chat-screen.png" alt="Chat Screen" width="800">
 </details>
 
 <details>
 <summary><b>Group Management</b></summary>
 <br>
-<i>Insert group-management.png here</i>
+<img src="./docs/images/group-management.png" alt="Group Management" width="800">
 </details>
 
 ---
