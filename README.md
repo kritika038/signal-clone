@@ -46,6 +46,7 @@ You can test the application live without installing it locally:
 
 ---
 
+<a id="project-overview"></a>
 ## 🎯 Project Overview
 
 This project was built to address the complexities of modern real-time communication by replicating the user experience and architectural demands of **Signal Messenger**.
@@ -59,6 +60,7 @@ This project was built to address the complexities of modern real-time communica
 
 ---
 
+<a id="features"></a>
 ## ✨ Features
 
 ### 🔐 Authentication
@@ -97,6 +99,7 @@ This project was built to address the complexities of modern real-time communica
 
 ---
 
+<a id="tech-stack"></a>
 ## 🛠 Tech Stack
 
 | Layer | Technologies |
@@ -110,6 +113,7 @@ This project was built to address the complexities of modern real-time communica
 
 ---
 
+<a id="screenshots"></a>
 ## 📸 Screenshots
 
 <details>
@@ -138,6 +142,7 @@ This project was built to address the complexities of modern real-time communica
 
 ---
 
+<a id="architecture"></a>
 ## 🏗 Architecture
 
 The application follows a modular, horizontally scalable architecture.
@@ -166,6 +171,7 @@ graph TD
 
 ---
 
+<a id="folder-structure"></a>
 ## 📂 Folder Structure
 
 ```text
@@ -195,6 +201,7 @@ signal-clone/
 
 ---
 
+<a id="database-schema"></a>
 ## 🗄 Database Schema
 
 ```mermaid
@@ -219,6 +226,7 @@ erDiagram
 
 ---
 
+<a id="real-time-events"></a>
 ## ⚡ Real-Time Events
 
 The application uses Socket.IO namespaces to handle real-time events efficiently.
@@ -234,6 +242,7 @@ The application uses Socket.IO namespaces to handle real-time events efficiently
 
 ---
 
+<a id="security-performance--scalability"></a>
 ## 🔒 Security, Performance & Scalability
 
 ### Security
@@ -252,6 +261,7 @@ The application uses Socket.IO namespaces to handle real-time events efficiently
 
 ---
 
+<a id="installation--local-setup"></a>
 ## ⚙️ Installation & Local Setup
 
 ### Prerequisites
@@ -306,6 +316,7 @@ npm run dev
 
 ---
 
+<a id="api-documentation"></a>
 ## 📚 API Documentation
 
 | Method | Endpoint | Description | Auth Required |
@@ -322,6 +333,7 @@ npm run dev
 
 ---
 
+<a id="assignment-mapping"></a>
 ## 📋 Assignment Mapping
 
 | Assignment Requirement | Status | Implementation Details |
@@ -338,6 +350,7 @@ npm run dev
 
 ---
 
+<a id="final-notes"></a>
 ## 🏆 Final Notes
 
 This repository was designed as a capstone project for a Full Stack Software Development Engineering (SDE) evaluation. 
