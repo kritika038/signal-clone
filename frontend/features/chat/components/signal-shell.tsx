@@ -2,30 +2,7 @@
 
 import { useMutation, useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Bell,
-  Image as ImageIcon,
-  Menu,
-  MessageSquarePlus,
-  MoonStar,
-  Search,
-  Smile,
-  UsersRound,
-  Video,
-  Edit2,
-  Settings,
-  Trash2,
-  Copy,
-  LogOut,
-  Plus,
-  UserPlus,
-  Users,
-  Paperclip,
-  Phone,
-  Check,
-  CheckCheck,
-  Clock,
-} from "lucide-react";
+import { Bell, Image as ImageIcon, Menu, MessageSquarePlus, MoonStar, Search, Smile, UsersRound, Video, CreditCard as Edit2, Settings, Trash2, Copy, LogOut, Plus, UserPlus, Users, Paperclip, Phone, Check, CheckCheck, Clock } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -45,6 +22,7 @@ import {
   searchGlobal,
   sendMessage,
   uploadMedia,
+  type ApiMessageType,
 } from "@/services/chat";
 import { NewChatModal } from "./new-chat-modal";
 import { CreateGroupModal } from "./create-group-modal";
@@ -270,7 +248,7 @@ export function SignalShell() {
           throw new Error("All attachments failed to upload.");
       }
 
-      let messageType = "TEXT";
+      let messageType: ApiMessageType = "TEXT";
       if (uploadedAttachments.length > 0) {
         const mimeType = (uploadedAttachments[0] as any).mime_type || "";
         if (mimeType.startsWith("image/")) {

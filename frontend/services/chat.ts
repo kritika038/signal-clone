@@ -1,5 +1,7 @@
 import { apiRequest, API_URL } from "@/services/api";
 
+export type ApiMessageType = "TEXT" | "IMAGE" | "VIDEO" | "FILE" | "SYSTEM";
+
 export interface ApiUserSummary {
   id: string;
   phone: string;
@@ -57,7 +59,7 @@ export interface ApiMessage {
   conversation_id: string;
   sender_id: string;
   content: string | null;
-  message_type: string | null;
+  message_type: ApiMessageType | null;
   reply_to_id: string | null;
   edited_at: string | null;
   expires_at: string | null;
@@ -136,7 +138,7 @@ export async function sendMessage(
   conversationId: string,
   payload: {
     content?: string | null;
-    message_type?: string;
+    message_type?: ApiMessageType;
     reply_to_id?: string | null;
     attachments?: Array<Record<string, unknown>>;
     client_message_id?: string;
