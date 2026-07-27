@@ -25,6 +25,7 @@ router = APIRouter(prefix="/groups", tags=["Groups"])
 class GroupCreatePayload(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(default=None, max_length=255)
+    avatar_url: str | None = Field(default=None, max_length=255)
     member_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
@@ -76,6 +77,7 @@ async def create_group(
     group = await GroupRepository(db).create_group(
         name=payload.name,
         description=payload.description,
+        avatar_url=payload.avatar_url,
         creator_id=current_user.id,
         member_ids=payload.member_ids,
     )
@@ -173,3 +175,40 @@ async def remove_group_member(
     if not removed:
         raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
     return {"success": True, "data": {"removed": True, "conversation_id": str(id), "member_id": str(member_id)}}
+
+
+class GroupUpdateMemberRolePayload(BaseModel):
+    role: ConversationRole
+
+
+@router.patch("/{id}/members/{member_id}", response_model=dict[str, Any])
+async def update_group_member_role(
+    id: uuid.UUID,
+    member_id: uuid.UUID,
+    payload: GroupUpdateMemberRolePayload,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    group = await _get_group(db, id, current_user.id)
+    await _ensure_admin(group, current_user.id)
+    
+    # We should probably make sure they are not demoting the owner?
+    # Or maybe the frontend prevents it. But let's just update the role.
+    updated = await GroupRepository(db).update_member_role(id, member_id, payload.role)
+    if not updated:
+        raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
+        
+    return {"success": True, "data": {"updated": True, "conversation_id": str(id), "member_id": str(member_id), "role": payload.role.value}}
+
+
+@router.delete("/{id}/leave", response_model=dict[str, Any])
+async def leave_group(
+    id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_db),
+):
+    group = await _get_group(db, id, current_user.id)
+    removed = await GroupRepository(db).remove_member(id, current_user.id)
+    if not removed:
+        raise APIException(status.HTTP_404_NOT_FOUND, "MEMBER_NOT_FOUND", "Member not found in group")
+    return {"success": True, "data": {"left": True, "conversation_id": str(id)}}

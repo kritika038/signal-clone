@@ -1,14 +1,14 @@
-import { useState, useDeferredValue, useMemo } from "react";
+import { useState, useDeferredValue, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, X, Loader2, UserPlus, Edit2, Shield, Trash2, Check, Search } from "lucide-react";
+import { Users, X, Loader2, UserPlus, Edit2, Shield, Trash2, Check, Search, Camera, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 import { useSessionStore } from "@/store/use-session-store";
 import { useSignalStore } from "@/store/use-signal-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { fetchContacts } from "@/services/contacts";
-import { updateGroup, addGroupMember, removeGroupMember, fetchConversation } from "@/services/chat";
+import { updateGroup, addGroupMember, removeGroupMember, fetchConversation, updateGroupMemberRole, uploadMedia, leaveGroup } from "@/services/chat";
 
 interface ConversationInfoModalProps {
   isOpen: boolean;
@@ -25,7 +25,11 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
   const [editName, setEditName] = useState("");
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchMemberQuery, setSearchMemberQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
+  const deferredMemberSearch = useDeferredValue(searchMemberQuery);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const conversationQuery = useQuery({
     queryKey: ["conversation", activeConversationId, accessToken],
@@ -71,6 +75,43 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
     mutationFn: (memberId: string) => removeGroupMember(accessToken!, activeConversationId!, memberId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversation", activeConversationId] });
+    },
+    onError: (error: any) => setFeatureNotice(error.message),
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ memberId, role }: { memberId: string, role: "ADMIN" | "MEMBER" }) => updateGroupMemberRole(accessToken!, activeConversationId!, memberId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversation", activeConversationId] });
+    },
+    onError: (error: any) => setFeatureNotice(error.message),
+  });
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const data = await uploadMedia(accessToken!, file);
+      await updateGroup(accessToken!, activeConversationId!, { avatar_url: data.storage_key as string });
+      queryClient.invalidateQueries({ queryKey: ["conversation", activeConversationId] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    } catch (err: any) {
+      setFeatureNotice(err.message || "Failed to update avatar");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const leaveGroupMutation = useMutation({
+    mutationFn: () => leaveGroup(accessToken!, activeConversationId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      // Reset active conversation if we were looking at it
+      useSignalStore.getState().selectConversation("");
+      handleClose();
     },
     onError: (error: any) => setFeatureNotice(error.message),
   });
@@ -124,14 +165,26 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
             {/* Content area that scrolls */}
             <div className="flex-1 overflow-y-auto">
               <div className="p-6 flex flex-col items-center border-b border-neutral-800 bg-neutral-900/50">
-                <div className="w-24 h-24 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-3xl font-semibold mb-4">
-                  {conversation.avatar_url ? (
-                    <img src={conversation.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" />
-                  ) : isGroup ? (
-                    <Users className="w-10 h-10" />
-                  ) : (
-                    conversation.name?.charAt(0).toUpperCase() || "?"
+                <div className="relative group w-24 h-24 mb-4">
+                  <div className="w-full h-full rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-3xl font-semibold overflow-hidden">
+                    {conversation.avatar_url ? (
+                      <img src={`/api/v1/media/${conversation.avatar_url}`} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : isGroup ? (
+                      <Users className="w-10 h-10" />
+                    ) : (
+                      conversation.name?.charAt(0).toUpperCase() || "?"
+                    )}
+                  </div>
+                  {isGroup && isAdmin && (
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-full transition-opacity cursor-pointer text-white"
+                      disabled={isUploading}
+                    >
+                      {isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Camera className="w-6 h-6" />}
+                    </button>
                   )}
+                  <input type="file" className="hidden" accept="image/*" ref={fileInputRef} onChange={handleAvatarChange} />
                 </div>
                 
                 {isEditing ? (
@@ -156,16 +209,21 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold text-neutral-100">{conversation.name || "Unknown"}</h2>
-                    {isGroup && isAdmin && (
-                      <button onClick={() => { setEditName(conversation.name || ""); setIsEditing(true); }} className="text-neutral-500 hover:text-white transition-colors">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl font-bold text-neutral-100">{conversation.name || "Unknown"}</h2>
+                      {isGroup && isAdmin && (
+                        <button onClick={() => { setEditName(conversation.name || ""); setIsEditing(true); }} className="text-neutral-500 hover:text-white transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    {conversation.description && (
+                      <p className="text-sm text-neutral-400 text-center px-4 mt-2 mb-1">{conversation.description}</p>
                     )}
                   </div>
                 )}
-                {isGroup && <p className="text-sm text-neutral-500 mt-1">{members.filter(m => !m.left_at).length} members</p>}
+                {isGroup && <p className="text-sm text-neutral-500 mt-1">{members.filter((m: any) => !m.left_at).length} members</p>}
               </div>
 
               {isGroup && (
@@ -223,8 +281,30 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                     </div>
                   )}
 
+                  <div className="relative mb-4">
+                    <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                    <Input
+                      className="h-9 w-full rounded-md border-neutral-800 bg-neutral-900 pl-9 text-sm focus-visible:ring-1 focus-visible:ring-blue-500"
+                      placeholder="Search members..."
+                      value={searchMemberQuery}
+                      onChange={(e) => setSearchMemberQuery(e.target.value)}
+                    />
+                  </div>
+
                   <div className="space-y-2">
-                    {members.filter(m => !m.left_at).map(member => {
+                    {members
+                      .filter((m: any) => !m.left_at)
+                      .filter((m: any) => {
+                        if (!deferredMemberSearch) return true;
+                        const term = deferredMemberSearch.toLowerCase();
+                        return (
+                          m.user?.display_name?.toLowerCase().includes(term) ||
+                          m.nickname?.toLowerCase().includes(term) ||
+                          m.user?.username?.toLowerCase().includes(term) ||
+                          m.user?.phone?.toLowerCase().includes(term)
+                        );
+                      })
+                      .map((member: any) => {
                       const isMe = member.user_id === currentUserId;
                       return (
                         <div key={member.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-neutral-800/50 group">
@@ -247,15 +327,38 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                             </div>
                           </div>
                           {isAdmin && !isMe && member.role !== "OWNER" && (
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-8 w-8 text-neutral-500 hover:text-red-400 hover:bg-red-950/30 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                              onClick={() => removeMemberMutation.mutate(member.user_id)}
-                              title="Remove member"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                              {member.role === "MEMBER" ? (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-neutral-500 hover:text-blue-400 hover:bg-blue-950/30"
+                                  onClick={() => updateRoleMutation.mutate({ memberId: member.user_id, role: "ADMIN" })}
+                                  title="Promote to Admin"
+                                >
+                                  <ArrowUpCircle className="w-4 h-4" />
+                                </Button>
+                              ) : currentUserMember?.role === "OWNER" ? (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-neutral-500 hover:text-yellow-400 hover:bg-yellow-950/30"
+                                  onClick={() => updateRoleMutation.mutate({ memberId: member.user_id, role: "MEMBER" })}
+                                  title="Demote to Member"
+                                >
+                                  <ArrowDownCircle className="w-4 h-4" />
+                                </Button>
+                              ) : null}
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8 text-neutral-500 hover:text-red-400 hover:bg-red-950/30"
+                                onClick={() => removeMemberMutation.mutate(member.user_id)}
+                                title="Remove member"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           )}
                         </div>
                       );
@@ -277,9 +380,21 @@ export function ConversationInfoModal({ isOpen, onClose }: ConversationInfoModal
                 </div>
               )}
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
+              {isGroup && currentUserMember && (
+                <div className="p-4 border-t border-neutral-800 bg-neutral-900/30 shrink-0">
+                  <Button 
+                    className="w-full bg-red-600 hover:bg-red-700 text-white" 
+                    onClick={() => leaveGroupMutation.mutate()}
+                    disabled={leaveGroupMutation.isPending}
+                  >
+                    {leaveGroupMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                    Leave Group
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    );
 }

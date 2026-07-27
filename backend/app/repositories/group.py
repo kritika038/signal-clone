@@ -15,7 +15,7 @@ class GroupRepository(BaseRepository[Conversation]):
         super().__init__(Conversation, db)
 
     async def create_group(
-        self, name: str, description: Optional[str], creator_id: uuid.UUID, member_ids: List[uuid.UUID]
+        self, name: str, description: Optional[str], avatar_url: Optional[str], creator_id: uuid.UUID, member_ids: List[uuid.UUID]
     ) -> Conversation:
         """
         Creates a new group conversation, assigns the creator as OWNER,
@@ -25,6 +25,7 @@ class GroupRepository(BaseRepository[Conversation]):
             type=ConversationType.GROUP,
             name=name,
             description=description,
+            avatar_url=avatar_url,
             created_by=creator_id
         )
         self.db.add(group)
@@ -113,6 +114,7 @@ class GroupRepository(BaseRepository[Conversation]):
     async def remove_member(self, conversation_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """
         Marks member as left by setting left_at timestamp.
+        If the leaving member is the OWNER, transfers ownership.
         """
         query = select(ConversationMember).where(
             and_(
@@ -126,6 +128,43 @@ class GroupRepository(BaseRepository[Conversation]):
 
         if member:
             member.left_at = datetime.now(timezone.utc)
-            await self.db.commit()
+            
+            # Transfer ownership if they were the owner
+            if member.role == ConversationRole.OWNER:
+                other_members_query = select(ConversationMember).where(
+                    and_(
+                        ConversationMember.conversation_id == conversation_id,
+                        ConversationMember.user_id != user_id,
+                        ConversationMember.left_at.is_(None)
+                    )
+                ).order_by(ConversationMember.joined_at.asc())
+                other_res = await self.db.execute(other_members_query)
+                next_owner = other_res.scalars().first()
+                if next_owner:
+                    next_owner.role = ConversationRole.OWNER
+                    
+            await self.db.flush()
+            return True
+        return False
+
+    async def update_member_role(
+        self, conversation_id: uuid.UUID, user_id: uuid.UUID, role: ConversationRole
+    ) -> bool:
+        """
+        Updates the role of a group member.
+        """
+        query = select(ConversationMember).where(
+            and_(
+                ConversationMember.conversation_id == conversation_id,
+                ConversationMember.user_id == user_id,
+                ConversationMember.left_at.is_(None)
+            )
+        )
+        result = await self.db.execute(query)
+        member = result.scalar_one_or_none()
+
+        if member:
+            member.role = role
+            await self.db.flush()
             return True
         return False

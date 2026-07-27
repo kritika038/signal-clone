@@ -613,26 +613,31 @@ export function SignalShell() {
           <>
             {/* Chat Header */}
             <header className="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 dark:border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-50/50 dark:bg-neutral-100 dark:bg-neutral-900/50 px-4">
-              <div className="flex items-center gap-3">
-                <Button className="md:hidden" size="icon" variant="ghost" onClick={toggleSidebar}>
-                  <Menu className="h-5 w-5" />
-                </Button>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/20 text-sm font-semibold text-blue-400">
-                  {activeConversation?.avatar}
+              <button 
+                className="flex items-center gap-3 text-left hover:bg-neutral-200/50 dark:hover:bg-neutral-800/50 p-1.5 -ml-1.5 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setShowConversationInfo(true)}
+              >
+                <div className="flex items-center gap-3">
+                  <Button className="md:hidden" size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); toggleSidebar(); }}>
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/20 text-sm font-semibold text-blue-400">
+                    {activeConversation?.avatar}
+                  </div>
+                  <div>
+                    <h2 className="text-[15px] font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-100">{activeConversation?.title}</h2>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
+                      {typingUsers.size > 0 ? (
+                        <span className="text-blue-400">Typing...</span>
+                      ) : conversationDetailQuery.data?.type === "GROUP" ? (
+                        `${conversationDetailQuery.data.members.length} members`
+                      ) : (
+                        "Online"
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-[15px] font-medium text-neutral-900 dark:text-neutral-900 dark:text-neutral-100">{activeConversation?.title}</h2>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-500 dark:text-neutral-500 dark:text-neutral-500">
-                    {typingUsers.size > 0 ? (
-                      <span className="text-blue-400">Typing...</span>
-                    ) : conversationDetailQuery.data?.type === "GROUP" ? (
-                      `${conversationDetailQuery.data.members.length} members`
-                    ) : (
-                      "Online"
-                    )}
-                  </p>
-                </div>
-              </div>
+              </button>
               <div className="flex items-center gap-2">
                 <ToolbarIcon label="Voice Call" onClick={() => setComingSoonFeature({ title: "Voice Call", feature: "End-to-end encrypted voice calling" })}>
                   <Phone className="h-4 w-4" />
@@ -669,6 +674,11 @@ export function SignalShell() {
                       new Date(mappedMessages[index + 1]!.timestamp).toDateString() !==
                         new Date(message.timestamp).toDateString();
 
+                    const isGroup = activeConversation?.kind === "group";
+                    const senderName = isGroup && !message.isOutgoing
+                      ? activeConversation?.members.find((m) => m.id === message.senderId)?.name
+                      : null;
+
                     return (
                       <div key={message.id} className="flex flex-col-reverse">
                         <motion.div
@@ -676,8 +686,14 @@ export function SignalShell() {
                           animate={{ opacity: 1, y: 0 }}
                           className={`flex ${message.isOutgoing ? "justify-end" : "justify-start"} mt-1 group`}
                         >
-                          <div
-                            className={`relative max-w-[70%] rounded-2xl px-3.5 py-2 text-[15px] leading-relaxed shadow-sm ${
+                          <div className="flex flex-col">
+                            {senderName && (
+                              <span className="mb-0.5 ml-3.5 text-[11px] font-medium text-neutral-500 dark:text-neutral-400">
+                                {senderName}
+                              </span>
+                            )}
+                            <div
+                              className={`relative max-w-[70%] rounded-2xl px-3.5 py-2 text-[15px] leading-relaxed shadow-sm ${
                               message.isOutgoing
                                 ? "rounded-br-sm bg-blue-600 text-white"
                                 : "rounded-bl-sm bg-neutral-200 dark:bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-900 dark:text-neutral-100"
@@ -737,6 +753,7 @@ export function SignalShell() {
                                   </button>
                                 </>
                               )}
+                            </div>
                             </div>
                           </div>
                         </motion.div>

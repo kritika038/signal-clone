@@ -191,11 +191,7 @@ export async function uploadMedia(token: string, file: File) {
 
 export async function createGroup(
   token: string,
-  payload: {
-    name: string;
-    description?: string | null;
-    member_ids?: string[];
-  }
+  payload: { name: string; description: string | null; avatar_url?: string | null; member_ids: string[] }
 ) {
   return apiRequest<ApiConversation>("/api/v1/groups", {
     method: "POST",
@@ -250,6 +246,20 @@ export async function removeGroupMember(token: string, groupId: string, memberId
     success: boolean;
     data: { removed: boolean; conversation_id: string; member_id: string };
   }>(`/api/v1/groups/${groupId}/members/${memberId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function updateGroupMemberRole(token: string, groupId: string, memberId: string, role: "ADMIN" | "MEMBER") {
+  return apiRequest<Record<string, any>>(`/api/v1/groups/${groupId}/members/${memberId}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ role }),
+  });
+}
+export async function leaveGroup(token: string, groupId: string) {
+  return apiRequest<Record<string, any>>(`/api/v1/groups/${groupId}/leave`, {
     method: "DELETE",
     token,
   });

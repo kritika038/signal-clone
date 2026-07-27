@@ -8,7 +8,7 @@ import { useSignalStore } from "@/store/use-signal-store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { fetchContacts } from "@/services/contacts";
-import { createGroup } from "@/services/chat";
+import { createGroup, uploadMedia } from "@/services/chat";
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -20,6 +20,8 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const deferredSearch = useDeferredValue(searchQuery);
 
   const { accessToken } = useSessionStore();
@@ -37,6 +39,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
       createGroup(accessToken!, {
         name: groupName,
         description: null,
+        avatar_url: avatarUrl,
         member_ids: selectedContactIds,
       }),
     onSuccess: (data) => {
@@ -54,7 +57,23 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
     setSelectedContactIds([]);
     setGroupName("");
     setSearchQuery("");
+    setAvatarUrl(null);
     onClose();
+  };
+
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const data = await uploadMedia(accessToken!, file);
+      setAvatarUrl(data.storage_key as string);
+    } catch (err: any) {
+      setFeatureNotice(err.message || "Failed to upload avatar");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const toggleContact = (id: string) => {
@@ -173,9 +192,31 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
             {step === "details" && (
               <div className="flex-1 flex flex-col p-4">
                 <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-                  <div className="w-24 h-24 rounded-full bg-neutral-800 flex items-center justify-center border-2 border-neutral-700">
-                    <Users className="w-10 h-10 text-neutral-500" />
-                  </div>
+                  <label className="relative flex w-24 h-24 rounded-full bg-neutral-800 items-center justify-center border-2 border-neutral-700 cursor-pointer overflow-hidden group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarSelect}
+                      disabled={isUploading}
+                    />
+                    {isUploading ? (
+                      <Loader2 className="w-8 h-8 text-neutral-500 animate-spin" />
+                    ) : avatarUrl ? (
+                      <img
+                        src={`/api/v1/media/${avatarUrl}`}
+                        alt="Group Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Users className="w-10 h-10 text-neutral-500 group-hover:text-neutral-400 transition-colors" />
+                    )}
+                    {!isUploading && !avatarUrl && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-medium text-white uppercase tracking-wider">Upload</span>
+                      </div>
+                    )}
+                  </label>
                   <div className="w-full max-w-xs space-y-2">
                     <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       Group Name
@@ -204,7 +245,7 @@ export function CreateGroupModal({ isOpen, onClose }: CreateGroupModalProps) {
                   <Button
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => createGroupMutation.mutate()}
-                    disabled={!groupName.trim() || createGroupMutation.isPending}
+                    disabled={!groupName.trim() || createGroupMutation.isPending || isUploading}
                   >
                     {createGroupMutation.isPending ? (
                       <Loader2 className="w-5 h-5 animate-spin" />

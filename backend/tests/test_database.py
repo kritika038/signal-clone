@@ -154,6 +154,7 @@ async def test_group_conversation_creation_and_member_add(db_session: AsyncSessi
     group = await group_repo.create_group(
         name="Team Signal",
         description="Testing Signal Backend",
+        avatar_url=None,
         creator_id=creator.id,
         member_ids=[m1.id, m2.id]
     )
