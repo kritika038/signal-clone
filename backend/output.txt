@@ -1,0 +1,1 @@
+{"success":true,"data":{"storage_key":"4dd9597c089c4db1a827a416f9b7ddb7.txt","original_filename":"test.txt","mime_type":"text/plain","size":5,"checksum":"f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2","playback_url":"/api/v1/attachments/download/4dd9597c089c4db1a827a416f9b7ddb7.txt","thumbnail_url":null,"uploaded_by":null}}

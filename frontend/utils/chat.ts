@@ -5,6 +5,8 @@ import {
   isToday,
   isYesterday,
   parseISO,
+  differenceInDays,
+  isThisYear,
 } from "date-fns";
 
 import type { Conversation, SearchResult, ThemeMode } from "@/types/chat";
@@ -17,7 +19,13 @@ export function formatSidebarTime(value: string) {
   if (isYesterday(date)) {
     return "Yesterday";
   }
-  return format(date, "MMM d");
+  if (differenceInDays(new Date(), date) < 7) {
+    return format(date, "EEEE");
+  }
+  if (isThisYear(date)) {
+    return format(date, "MMM d");
+  }
+  return format(date, "MMM d, yyyy");
 }
 
 export function formatMessageTime(value: string) {
@@ -32,7 +40,10 @@ export function formatDayLabel(value: string) {
   if (isYesterday(date)) {
     return "Yesterday";
   }
-  return format(date, "EEEE, MMM d");
+  if (isThisYear(date)) {
+    return format(date, "EEEE, MMM d");
+  }
+  return format(date, "EEEE, MMM d, yyyy");
 }
 
 export function groupMessagesByDay(conversation: Conversation) {

@@ -1,0 +1,6 @@
+INFO:     Started server process [4541]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8007 (Press CTRL+C to quit)
+{"timestamp": "2026-07-27T05:50:24.045298+00:00", "level": "INFO", "logger": "app.services.storage_provider", "message": "uploads.local.saved"}
+INFO:     127.0.0.1:55464 - "POST /api/v1/media/upload HTTP/1.1" 200 OK

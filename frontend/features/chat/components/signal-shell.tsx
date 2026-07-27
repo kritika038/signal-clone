@@ -297,6 +297,7 @@ export function SignalShell() {
         updated_at: new Date().toISOString(),
         deleted_at: null,
         attachments: [],
+        rawAttachments: payload.attachments,
         reactions: [],
         receipts: [],
         status: "sending",
@@ -479,6 +480,17 @@ export function SignalShell() {
       clearInterval(heartbeatInterval);
     };
   }, [accessToken, activeConversationId, currentUserId, queryClient, setSocketState]);
+
+  const typingString = useMemo(() => {
+    if (typingUsers.size === 0) return null;
+    if (typingUsers.size === 1) {
+      const uid = Array.from(typingUsers)[0];
+      const member = activeConversation?.members.find((m) => m.id === uid);
+      return `${member?.name || "Someone"} is typing...`;
+    }
+    return `${typingUsers.size} people are typing...`;
+  }, [typingUsers, activeConversation]);
+
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-signal-dark-bg text-neutral-900 dark:text-white">
@@ -683,7 +695,7 @@ export function SignalShell() {
                     <h2 className="text-[15px] font-medium text-neutral-900 dark:text-white">{activeConversation?.title}</h2>
                     <p className="text-xs text-neutral-500 dark:text-signal-dark-textSecondary">
                       {typingUsers.size > 0 ? (
-                        <span className="text-signal-blue-400">Typing...</span>
+                        <span className="text-signal-blue-400">{typingString}</span>
                       ) : conversationDetailQuery.data?.type === "GROUP" ? (
                         `${conversationDetailQuery.data.members.length} members`
                       ) : (
@@ -768,16 +780,16 @@ export function SignalShell() {
                               {message.isEdited && <span>Edited</span>}
                               <span>{formatMessageTime(message.timestamp)}</span>
                               {message.isOutgoing && (
-                                <span className={`flex items-center ${message.status === "read" ? "text-white drop-shadow-sm" : message.status === "failed" ? "text-red-400" : "text-blue-200"}`}>
+                                <span className={`flex items-center ml-1 ${message.status === "read" ? "text-white drop-shadow-sm" : message.status === "failed" ? "text-red-400" : "text-blue-200"}`}>
                                   {message.status === "failed" ? "Failed" : 
-                                   message.status === "sending" ? <Clock className="h-3 w-3" /> :
-                                   message.status === "sent" ? <Check className="h-3 w-3" /> :
-                                   message.status === "delivered" ? <CheckCheck className="h-3 w-3 opacity-70" /> :
-                                   <CheckCheck className="h-3 w-3" /> /* read */}
+                                   message.status === "sending" ? <Clock className="h-3.5 w-3.5 opacity-70" /> :
+                                   message.status === "sent" ? <Check className="h-3.5 w-3.5 opacity-70" /> :
+                                   message.status === "delivered" ? <CheckCheck className="h-3.5 w-3.5 opacity-70" /> :
+                                   <CheckCheck className="h-3.5 w-3.5 text-white stroke-[3]" /> /* read */}
                                 </span>
                               )}
                               {message.status === "failed" && (
-                                <button className="ml-2 text-signal-blue-500 hover:underline" onClick={() => {
+                                <button className="ml-2 text-white bg-white/20 px-2 py-0.5 rounded-full text-[10px] hover:bg-white/30 transition-colors" onClick={() => {
                                   // Delete the failed message optimistic update
                                   queryClient.setQueryData(["messages", activeConversationId], (old: any) => {
                                     if (!old) return old;
@@ -785,8 +797,8 @@ export function SignalShell() {
                                     newPages[0] = newPages[0].filter((m: any) => m.id !== message.id);
                                     return { ...old, pages: newPages };
                                   });
-                                  // Retry with the original content
-                                  sendMessageMutation.mutate({ content: message.content || "", attachments: [], replyToId: message.quotedMessageId || null, clientMessageId: crypto.randomUUID() });
+                                  // Retry with the original content and attachments
+                                  sendMessageMutation.mutate({ content: message.content || "", attachments: (message as any).rawAttachments || [], replyToId: message.quotedMessageId || null, clientMessageId: crypto.randomUUID() });
                                 }}>
                                   Retry
                                 </button>
@@ -893,7 +905,7 @@ export function SignalShell() {
                           typingTimeoutRef.current = setTimeout(() => {
                             socketService.emit("typing.stop", { conversation_id: activeConversationId });
                             typingTimeoutRef.current = null;
-                          }, 2000);
+                          }, 3000);
                         }
                       }}
                       onKeyDown={(e) => {

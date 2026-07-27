@@ -1,0 +1,96 @@
+INFO:     Started server process [4414]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+{"timestamp": "2026-07-27T05:38:17.959623+00:00", "level": "ERROR", "logger": "fastapi", "message": "Unhandled exception: Traceback (most recent call last):\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py\", line 164, in __call__\n    await self.app(scope, receive, _send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/cors.py\", line 88, in __call__\n    await self.app(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/base.py\", line 193, in __call__\n    response = await self.dispatch_func(request, call_next)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/app/main.py\", line 25, in dispatch\n    response = await call_next(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/base.py\", line 168, in call_next\n    raise app_exc from app_exc.__cause__ or app_exc.__context__\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/base.py\", line 144, in coro\n    await self.app(scope, receive_or_disconnect, send_no_error)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/exceptions.py\", line 63, in __call__\n    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py\", line 53, in wrapped_app\n    raise exc\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py\", line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/middleware/asyncexitstack.py\", line 18, in __call__\n    await self.app(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/routing.py\", line 660, in __call__\n    await self.middleware_stack(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 2692, in app\n    await route.handle(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 1773, in handle\n    await self.original_router.handle(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 2747, in handle\n    await included_router._handle_selected(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 1793, in _handle_selected\n    await original_route.handle(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 1272, in handle\n    await app(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 156, in app\n    await wrap_app_handling_exceptions(app, request)(scope, receive, send)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py\", line 53, in wrapped_app\n    raise exc\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py\", line 42, in wrapped_app\n    await app(scope, receive, sender)\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 142, in app\n    response = await f(request)\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 698, in app\n    raw_response = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py\", line 350, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/app/api/routes/media.py\", line 222, in upload_media\n    upload = await runtime_services.storage_provider.upload_file(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/Users/kritikabansal/Desktop/signal-clone/backend/app/services/storage_provider.py\", line 86, in upload_file\n    logger.info(\"uploads.local.saved\", extra={\"storage_key\": storage_key, \"filename\": filename})\n    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/logging/__init__.py\", line 1520, in info\n    self._log(INFO, msg, args, **kwargs)\n    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/logging/__init__.py\", line 1663, in _log\n    record = self.makeRecord(self.name, level, fn, lno, msg, args,\n                             exc_info, func, extra, sinfo)\n  File \"/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/logging/__init__.py\", line 1637, in makeRecord\n    raise KeyError(\"Attempt to overwrite %r in LogRecord\" % key)\nKeyError: \"Attempt to overwrite 'filename' in LogRecord\"\n"}
+INFO:     127.0.0.1:55345 - "POST /api/v1/media/upload HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/engineio/async_drivers/asgi.py", line 75, in __call__
+    await self.other_asgi_app(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/app/main.py", line 25, in dispatch
+    response = await call_next(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 2692, in app
+    await route.handle(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 1773, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 2747, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 1793, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 1272, in handle
+    await app(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 156, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 142, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 698, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py", line 350, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/app/api/routes/media.py", line 222, in upload_media
+    upload = await runtime_services.storage_provider.upload_file(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "/Users/kritikabansal/Desktop/signal-clone/backend/app/services/storage_provider.py", line 86, in upload_file
+    logger.info("uploads.local.saved", extra={"storage_key": storage_key, "filename": filename})
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/logging/__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/logging/__init__.py", line 1663, in _log
+    record = self.makeRecord(self.name, level, fn, lno, msg, args,
+                             exc_info, func, extra, sinfo)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/logging/__init__.py", line 1637, in makeRecord
+    raise KeyError("Attempt to overwrite %r in LogRecord" % key)
+KeyError: "Attempt to overwrite 'filename' in LogRecord"

@@ -40,6 +40,7 @@ export function mapApiMessage(message: ApiMessage, currentUserId: string): ChatM
       count: 1,
       reacted: reaction.user_id === currentUserId,
     })),
+    rawAttachments: (message as any).rawAttachments,
     attachments: message.attachments.map<AttachmentDraft>((attachment) => ({
       id: attachment.id,
       name: attachment.original_filename,

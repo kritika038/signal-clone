@@ -48,6 +48,7 @@ export interface ChatMessage {
   scheduledFor?: string;
   disappearingLabel?: string;
   reactions?: Reaction[];
+  rawAttachments?: any[];
   attachments?: AttachmentDraft[];
 }
 
